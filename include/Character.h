@@ -108,6 +108,7 @@ struct MainPoint {
         mTarget = _target;
         
         mTargetTime = _ms;
+        mSetTime    = niko::getTimeMS();
     };
     
     //Direkt zum Punkt
@@ -165,9 +166,17 @@ struct MainPoint {
             }
             else {
                 
-                EaseInExpo();
                 
+                float t = niko::mapping( timeDelta, 0, mTargetTime - mSetTime, 0, 1, true);
+               // float distLength = 1 - ci::easeInQuad( t );
+                float distLength = 1 - ci::easeInQuart( t );
                 
+                Vec3f newPosition = pPosition;
+                newPosition += (mTarget - pPosition) * distLength;
+                
+                //EaseInExpo();
+                
+                /*
                 //float time = math<float>::clamp( fmod( getElapsedSeconds() * TWEEN_SPEED, 1 ) * 1.5f, 0, 1 );
                 
                 //Get Frames pro MS
@@ -180,6 +189,8 @@ struct MainPoint {
                 Vec3f newPosition = pPosition;
                 newPosition += (mTarget - pPosition) / fptd;
                 
+                 */
+                 
                 //set new Pos
                 p->moveTo(newPosition);
             }
@@ -202,6 +213,7 @@ struct MainPoint {
     bool    mEndOfLine;
     Vec3f   mTarget, mOldPosition;
     time_t  mTargetTime;  // in ms
+    time_t  mSetTime;
     bool    mMoveBack;
     bool    mActive;
     

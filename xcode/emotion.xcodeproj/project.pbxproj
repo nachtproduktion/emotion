@@ -260,11 +260,11 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				238F2B771514B49B00673859 /* BeatController.h */,
+				32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */,
 				23CE9750150C147D00E0A515 /* niko_functionen.h */,
 				23F904BC150BFA4E0040F1A3 /* Character.h */,
 				23F904AF150BE0330040F1A3 /* Particle.h */,
-				32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */,
+				238F2B771514B49B00673859 /* BeatController.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
