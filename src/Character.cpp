@@ -2,9 +2,12 @@
 #include "cinder/Rand.h"
 #include "cinder/gl/gl.h"
 #include "cinder/app/AppBasic.h"
+#include "cinder/gl/Texture.h"
+#include "cinder/ImageIo.h"
 
 using namespace ci;
-
+using namespace ci::app;
+using namespace std;
 
 Character::Character()
 {
@@ -14,6 +17,7 @@ Character::Character()
     mForceTimer = false;
     mNumberOfMainPoints = 0;
 
+    counter = 1;
 }
 
 Character::Character( ci::Vec3f _pos, float _radius )
@@ -24,6 +28,7 @@ Character::Character( ci::Vec3f _pos, float _radius )
     mForceTimer = false;
     mNumberOfMainPoints = 0;
 
+    counter = 1;
 }
 
 void Character::mkPoint(MainPoint *lastPoint) {
@@ -94,6 +99,9 @@ int Character::getRandPointNumber() {
 }
 
 void Character::createNewStructure(int _num) {
+    
+    
+    ballImage = gl::Texture( loadImage( loadResource( "kopf.png" ) ) );
     
     mPerlin = Perlin();
     
@@ -183,16 +191,54 @@ void Character::scale(float _s) {
 	}
 }
 
-void Character::dance( int _t ) {
+void Character::setNextBeat( time_t _bang ) {
+    mNextBeat = _bang;
     
-    if(mNumberOfMainPoints > 0) {
+    
+    if( counter == 4 ) { counter = 1; }
+    else { counter++; }
+    
+    cout << counter << endl;
+}
+
+void Character::dance() {
+    
+    Vec3f randVec = Rand::randVec3f() * Rand::randFloat(55);
+    
+    
+    if( counter == 0 ) {
         
-        Vec3f randVec = Rand::randVec3f() * Rand::randFloat(mRadius);
+        for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+            
+            if( !p->getActive() ) {
+                if( !p->mEndOfLine ) {
+                    Vec3f randVec = Rand::randVec3f() * Rand::randFloat(100);
+                    randVec += p->getPosition();
+                    p->moveTo(randVec, mNextBeat, false);
+                }
+            }
+        }
+    
+    } else {
         
-        //mMainPoints[0].moveTo(_mousePos);
-        mMainPoints[0].moveTo(randVec, _t, false);
+        for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+            if( !p->getActive() ) {
+                if( p->mEndOfLine ) {
+                    
+                    randVec *= -1;
+              
+                    
+                    Vec3f tmp = randVec + p->getPosition();
+                    p->moveTo(tmp, mNextBeat, false);
+                
+                }
+            }
+        }
+        
     }
     
+
+
     /*
     Vec3f randVec = Rand::randVec3f() * 10;
     
@@ -229,12 +275,18 @@ void Character::moveTo(Vec2f _mousePos) {
 
 void Character::update() {
     
+    //Tanz funktion
+    dance();
+    
+    //Mainpoint update
     for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
         p->update();
     }
     
+    //physics update
     mPhysics.update();
 }
+
 
 //RENAME
 void Character::test() {
@@ -289,17 +341,47 @@ void Character::draw() {
     gl::disableAlphaBlending();
     
     gl::color(1,0,0);
+    
+    glAlphaFunc(GL_GREATER, 0.5);
+    
     for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
         
+        gl::enableAlphaBlending();
+        
         if(p->mEndOfLine) {
-            gl::color(0.5,0.5,1);
+           // gl::color(0.5,0.5,1);
+            gl::color(1,1,1,1);
+            if(ballImage) ballImage.enableAndBind();
+            
+            glEnable(GL_ALPHA_TEST);
+            
+            // draw ball
+            glPushMatrix();
+            glTranslatef(p->getPosition());
+           // glRotatef(0, 0, 1, 0);
+            
+            glBegin(GL_QUADS);
+            glTexCoord2f(0, 0); glVertex2f(-p->mRadius, -p->mRadius);
+            glTexCoord2f(1, 0); glVertex2f(p->mRadius, -p->mRadius);
+            glTexCoord2f(1, 1); glVertex2f(p->mRadius, p->mRadius);
+            glTexCoord2f(0, 1); glVertex2f(-p->mRadius, p->mRadius);
+            glEnd();
+            glPopMatrix();
+            
+            glDisable(GL_ALPHA_TEST);
+            
+            if(ballImage) ballImage.unbind();
+			glPopMatrix();
+            
         }
         else {
             gl::color(1,1,0);
+            p->draw();
         }
-        p->draw();
         
         
+        
+        gl::disableAlphaBlending();
         
         
         for ( int i = 0; i<p->mNeighbours.size(); i++) {

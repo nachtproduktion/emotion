@@ -7,6 +7,7 @@
 #include "cinder/gl/gl.h"
 #include "cinder/Utilities.h"
 #include "cinder/Easing.h"
+#include "cinder/gl/Texture.h"
 
 #include <list>
 #include <vector>
@@ -46,7 +47,7 @@ struct MainPoint {
         
         mMass	= 8.0f;
 		mBounce	= 0.5f;
-		mRadius	= 4.0f;
+		mRadius	= 20.0f;
         
         mEndOfLine     = true;
         
@@ -70,8 +71,22 @@ struct MainPoint {
     
     void postSettings() {
         if( mNeighbours.size() == 0 ) { mEndOfLine = true; }
-        else if( mNeighbours.size() == 1 && mParticleID == 0 ) { mEndOfLine = true; }
-        else { mEndOfLine = false; }
+        else if( mNeighbours.size() == 1 && mParticleID == 0 ) { 
+            mEndOfLine = true; 
+            
+            mMass      = 6.0f;
+            Physics::Particle3D *p = getParticle();
+            p->setMass( mMass );
+            
+        }
+        else { 
+            mEndOfLine = false; 
+            
+            mMass      = 120.0f;
+            Physics::Particle3D *p = getParticle();
+            p->setMass( mMass );
+            p->isFixed();
+        }
     }
     
     Vec3f getPosition() {
@@ -93,6 +108,7 @@ struct MainPoint {
     void moveTo( Vec3f _target ) { 
         mActive = true;
         mTarget = _target;
+        mTargetTime = 0;
     };
 
     void moveTo( Vec3f _target, time_t _ms, bool _back = false) { 
@@ -117,6 +133,8 @@ struct MainPoint {
         mTarget = _target;
         p->moveTo(_target);
         
+        mActive = false;
+        
     };
     
     void moveBy( Vec3f _dir ) {
@@ -130,18 +148,17 @@ struct MainPoint {
     
         //cout << "update: " << mTarget << endl;
         
-        Physics::Particle3D* p = getParticle();
-        Vec3f pPosition = p->getPosition();
-        
-        if( mTarget == pPosition ) {
-            mActive = false;
+        if( !mActive ) {
             return;
         } 
+        
+        
+        Physics::Particle3D* p = getParticle();
+        Vec3f pPosition = p->getPosition();
         
         if( mTargetTime == 0) {
             if( mTarget.distance(pPosition) < 1 ) {
                 forceTo(mTarget);
-                mActive = false;
             }
             else {
                 Vec3f newPosition = pPosition;
@@ -150,26 +167,26 @@ struct MainPoint {
             }
         } else {
             
-            time_t msec = niko::getTimeMS();
-            time_t timeDelta = mTargetTime - msec;
+            time_t timeDelta = mTargetTime - niko::getTimeMS();
             
             if( timeDelta <= 0 ) { 
+                
                 forceTo(mTarget);
                 mTargetTime = 0;
-                
-                mActive = false;
                 
                 if(mMoveBack) {
                     mMoveBack = false;
                     moveTo(mOldPosition);
                 }
+                
             }
             else {
                 
-                
                 float t = niko::mapping( timeDelta, 0, mTargetTime - mSetTime, 0, 1, true);
-               // float distLength = 1 - ci::easeInQuad( t );
-                float distLength = 1 - ci::easeInQuart( t );
+               // float distLength = 1 - ci::easeInQuad( t ); 
+                //float distLength = 1 - ci::easeInSine( t );
+                float distLength = 1 - ci::easeNone( t );
+                
                 
                 Vec3f newPosition = pPosition;
                 newPosition += (mTarget - pPosition) * distLength;
@@ -204,6 +221,11 @@ struct MainPoint {
         /* DEBUG
         if(mEndOfLine) {
         gl::drawString( toString(mParticleID), Vec2f(p->getPosition().x, p->getPosition().y), ColorA(1,1,1,1));
+        }
+ 
+        if(!mActive) {
+            gl::color(255, 0, 0);
+            gl::drawSphere(Vec3f(0,0,0), 500);
         }
          */
         
@@ -241,12 +263,13 @@ class Character {
     void createPhysics();
     void setRadius(float _r);
     void scale(float _s);
-    int getRandPointNumber();
+    int  getRandPointNumber();
     void addRandomForce(float _f);
     void moveTo(Vec2f _mousePos);
-    void dance( int _t );
+    void dance();
     //RENAME
     void test();
+    void setNextBeat( time_t _bang );
    
     
     ci::Vec3f	mCenterPos;
@@ -254,6 +277,8 @@ class Character {
     int         mNumberOfMainPoints;
     int         mMainPointsLeft;
     bool        mOpenLines;
+    time_t      mNextBeat;
+    int         counter;
     
     std::vector<MainPoint>  mMainPoints;
     Perlin      mPerlin;
@@ -262,5 +287,9 @@ class Character {
     //Physics
     Physics::World3D        mPhysics;
     int                     mForceTimer;
+    
+    
+    //
+    gl::Texture         ballImage;
     
 };

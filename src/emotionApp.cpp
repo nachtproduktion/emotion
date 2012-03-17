@@ -43,6 +43,7 @@ class emotionApp : public AppBasic {
 	Quatf				mSceneRotation;
 	float				mCameraDistance;
 	Vec3f				mEye, mCenter, mUp;
+	
     
 };
 
@@ -54,6 +55,7 @@ void emotionApp::prepareSettings( Settings *settings )
 
 void emotionApp::setup()
 {
+
     
     // SETUP CAMERA
 	mCameraDistance = 500.0f;
@@ -136,6 +138,14 @@ void emotionApp::draw()
 	}
     
     mCharacter.draw();
+    
+    /*
+    //DEBUG
+    if( mBeatController.newBeat ) {
+        gl::color(0, 255, 0);
+        gl::drawSolidCircle(Vec2d(0,0), 500.0f);
+    }
+     */
     
     
     // DRAW PARAMS WINDOW

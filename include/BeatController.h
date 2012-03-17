@@ -19,7 +19,7 @@ class BeatController {
         BeatController();
         void setBPM( int _bpm );
         void calcTimeOffset();
-        time_t getNextBeat();
+        void calcNextBeat();
         void addCharacter( Character * _character );
         void delCharacter( int _id );
         void emtpyCharacter();
@@ -31,9 +31,10 @@ class BeatController {
         //int mFrameOffset;
         int mCalcFrameRate;
         int mBangFrame;
-        int mCounter;
         time_t mBangTime;
+        time_t mNextBang;
         std::vector<Character *>  mCharacterList;
+        bool newBeat;   
 
 };
 

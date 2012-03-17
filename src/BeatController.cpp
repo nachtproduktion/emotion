@@ -15,9 +15,10 @@ BeatController::BeatController() {
     
     mBPM            = 120;
     mTimeOffset     = 500;
-    //mFrameOffset    = 30;
-    mCounter        = 0;
     mBangTime       = 0;
+    mNextBang       = 0;
+    
+    newBeat         = false;
     
 }
 
@@ -33,6 +34,10 @@ void BeatController::calcTimeOffset() {
     // 1 min = 60 000 ms
     float msProBeat = 60000 / mBPM;
     
+    mTimeOffset = (int) msProBeat;
+    
+    //bang();
+    
     //Get Frames pro MS
    // mCalcFrameRate = ci::app::getFrameRate();
     //float fpms = mCalcFrameRate / 1000;
@@ -40,27 +45,21 @@ void BeatController::calcTimeOffset() {
     //Frames Pro Beat
    // float framesProBeat = fpms * msProBeat;
     
-    mTimeOffset = (int) msProBeat;
+    
     //mFrameOffset = (int) framesProBeat;
     
     //cout << "mTimeOffset: " << mTimeOffset << " - mFrameOffset: " << mFrameOffset << " / " << ci::app::getFrameRate() << endl;
     
 }
 
-time_t BeatController::getNextBeat() {
+void BeatController::calcNextBeat() {
     
-    static time_t nextBang = 0;
     time_t curTime = niko::getTimeMS();
     
-    if( curTime <= nextBang ) { 
-        return nextBang; 
+    if( curTime > mNextBang ) { 
+        mNextBang += mTimeOffset;
     }
-    else {
-        nextBang = mBangTime + mTimeOffset * mCounter;
-        mCounter++;
-        return nextBang;
-    }
-
+    
 }
 
 void BeatController::addCharacter( Character * _character ) {
@@ -81,25 +80,29 @@ void BeatController::emtpyCharacter() {
 
 void BeatController::bang() {
 
-    mBangTime = niko::getTimeMS();
-    mCounter = 1;
+    mBangTime = mNextBang = niko::getTimeMS();
   
 }
 
 void BeatController::update() {
-    static time_t lastbangTime = getNextBeat();
+
+    static time_t lastBang = mNextBang;
     
     if( mBangTime == 0 ) return;
     
-    time_t nextBangTime = getNextBeat();
-    
-    if( lastbangTime != nextBangTime ) {
-        
-        lastbangTime = nextBangTime;
+    // wenn neuer Beat dann update
+    calcNextBeat();
+    if( lastBang != mNextBang ) {
+        newBeat = true;
+        lastBang = mNextBang;
         
         for( int i = 0; i < mCharacterList.size(); i++ ) { 
-            mCharacterList[i]->dance( nextBangTime );
-        }   
+            mCharacterList[i]->setNextBeat( mNextBang );
+        }  
     }
+    else {
+        newBeat = false;
+    }
+    
 
 }
