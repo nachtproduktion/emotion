@@ -15,10 +15,10 @@
 		00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
 		00BAE65A0E7ED9C10018A608 /* emotionApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00BAE6590E7ED9C10018A608 /* emotionApp.cpp */; };
 		00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 00CCAF14116A9FEE008396D5 /* CinderApp.icns */; };
+		238F2B751514B49500673859 /* BeatController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 238F2B741514B49500673859 /* BeatController.cpp */; };
 		23A75423150FBE2200666518 /* Color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753BA150FBE2200666518 /* Color.cpp */; };
 		23A75424150FBE2200666518 /* MSACoreGL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753C1150FBE2200666518 /* MSACoreGL.cpp */; };
 		23A7542A150FBE2200666518 /* MSAObjCPointer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753D2150FBE2200666518 /* MSAObjCPointer.cpp */; };
-		23F8B06F151207CF00D092A9 /* BeatController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F8B06E151207CF00D092A9 /* BeatController.cpp */; };
 		23F904B2150BE0370040F1A3 /* Particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F904B1150BE0370040F1A3 /* Particle.cpp */; };
 		23F904BB150BFA460040F1A3 /* Character.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F904BA150BFA460040F1A3 /* Character.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
@@ -38,6 +38,8 @@
 		00CCAF14116A9FEE008396D5 /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = CinderApp.icns; path = ../resources/CinderApp.icns; sourceTree = SOURCE_ROOT; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
+		238F2B741514B49500673859 /* BeatController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BeatController.cpp; path = ../src/BeatController.cpp; sourceTree = "<group>"; };
+		238F2B771514B49B00673859 /* BeatController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BeatController.h; path = ../include/BeatController.h; sourceTree = "<group>"; };
 		23A753B8150FBE2200666518 /* ChanTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChanTraits.h; sourceTree = "<group>"; };
 		23A753B9150FBE2200666518 /* CinderMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CinderMath.h; sourceTree = "<group>"; };
 		23A753BA150FBE2200666518 /* Color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Color.cpp; sourceTree = "<group>"; };
@@ -67,8 +69,6 @@
 		23A75416150FBE2200666518 /* MSAPhysicsSpring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSAPhysicsSpring.h; sourceTree = "<group>"; };
 		23A75417150FBE2200666518 /* MSAPhysicsWorld.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSAPhysicsWorld.h; sourceTree = "<group>"; };
 		23CE9750150C147D00E0A515 /* niko_functionen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = niko_functionen.h; path = ../include/niko_functionen.h; sourceTree = "<group>"; };
-		23F8B06D151207C500D092A9 /* BeatController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BeatController.h; sourceTree = "<group>"; };
-		23F8B06E151207CF00D092A9 /* BeatController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BeatController.cpp; sourceTree = "<group>"; };
 		23F904AF150BE0330040F1A3 /* Particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Particle.h; path = ../include/Particle.h; sourceTree = "<group>"; };
 		23F904B1150BE0370040F1A3 /* Particle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Particle.cpp; path = ../src/Particle.cpp; sourceTree = "<group>"; };
 		23F904BA150BFA460040F1A3 /* Character.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Character.cpp; path = ../src/Character.cpp; sourceTree = "<group>"; };
@@ -107,10 +107,10 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				238F2B741514B49500673859 /* BeatController.cpp */,
 				23F904BA150BFA460040F1A3 /* Character.cpp */,
 				23F904B1150BE0370040F1A3 /* Particle.cpp */,
 				00BAE6590E7ED9C10018A608 /* emotionApp.cpp */,
-				23F8B06E151207CF00D092A9 /* BeatController.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -260,11 +260,11 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				238F2B771514B49B00673859 /* BeatController.h */,
 				23CE9750150C147D00E0A515 /* niko_functionen.h */,
 				23F904BC150BFA4E0040F1A3 /* Character.h */,
 				23F904AF150BE0330040F1A3 /* Particle.h */,
 				32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */,
-				23F8B06D151207C500D092A9 /* BeatController.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -351,7 +351,7 @@
 				23A75423150FBE2200666518 /* Color.cpp in Sources */,
 				23A75424150FBE2200666518 /* MSACoreGL.cpp in Sources */,
 				23A7542A150FBE2200666518 /* MSAObjCPointer.cpp in Sources */,
-				23F8B06F151207CF00D092A9 /* BeatController.cpp in Sources */,
+				238F2B751514B49500673859 /* BeatController.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
