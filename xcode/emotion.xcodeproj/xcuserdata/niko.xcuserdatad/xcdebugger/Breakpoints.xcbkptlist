@@ -9,11 +9,11 @@
          continueAfterRunningActions = "No"
          isPathRelative = "0"
          filePath = "/Users/niko/Projekte/cinder/_apps/emotion/include/Character.h"
-         timestampString = "353708064.136758"
+         timestampString = "353983839.630613"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "38"
-         endingLineNumber = "38">
+         startingLineNumber = "36"
+         endingLineNumber = "36">
       </FileBreakpoint>
    </FileBreakpoints>
 </Bucket>

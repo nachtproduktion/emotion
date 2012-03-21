@@ -16,8 +16,9 @@ Character::Character()
     
     mForceTimer = false;
     mNumberOfMainPoints = 0;
-
-    counter = 1;
+    
+    mDrawCharacter = false;
+    
 }
 
 Character::Character( ci::Vec3f _pos, float _radius )
@@ -27,19 +28,35 @@ Character::Character( ci::Vec3f _pos, float _radius )
     
     mForceTimer = false;
     mNumberOfMainPoints = 0;
+    
+    mDrawCharacter = false;
 
-    counter = 1;
 }
 
-void Character::mkPoint(MainPoint *lastPoint) {
+void Character::mkPoint(MainPoint *lastPoint, bool firstPoint) {
     
     int newPoints = getRandPointNumber();
-        
-    //cout << newPoints << endl;   //DEBUG
-    
+
     if( newPoints > mMainPointsLeft) { newPoints = mMainPointsLeft; }
     
+    if(firstPoint && mMainPointsLeft > 1) {
+        //Dafür sorgen das Startpunkt immer 2 Nachbarn hat!
+        if( newPoints < 2 ) {
+            newPoints = 2;
+        }
+        mMainPointsLeft--;
+        mNumberOfMainPoints--;
+    }
+    
+    cout << newPoints << endl;   //DEBUG
+
+    
     for(int i = 0; i<newPoints; i++) {
+        
+        if( i == 1 && firstPoint ) { 
+            mMainPointsLeft++; 
+            mNumberOfMainPoints++;
+        }
         
         //Wenn alle Punkte aufgebraucht sind
         if( mMainPointsLeft <= 0 ) { return; }
@@ -105,6 +122,8 @@ void Character::createNewStructure(int _num) {
     
     mPerlin = Perlin();
     
+    mParticleController.clear();
+    
     //Physics
     createPhysics();
     mPhysics.clear();
@@ -115,16 +134,14 @@ void Character::createNewStructure(int _num) {
     mMainPoints.reserve( _num );    
     
     //First Point
-    ci::Vec3f randVec = Rand::randVec3f();
-    randVec.normalize();
-    randVec *= Rand::randFloat(mRadius);
-    randVec += mCenterPos;
-    
-    mMainPoints.push_back( MainPoint( randVec, &mPhysics, mNumberOfMainPoints - mMainPointsLeft ) );
+    mMainPoints.push_back( MainPoint( mCenterPos, &mPhysics, mNumberOfMainPoints - mMainPointsLeft ) );
     mMainPointsLeft--;
     
+    mMainPoints.back().setFixed();
+    mMainPoints.back().setMass(40.0f);
+    
     mOpenLines = false;
-    mkPoint(&mMainPoints.back());
+    mkPoint(&mMainPoints.back(), true);
 
     //cout << "erstellt:" << mMainPointsLeft << endl;    //debug
     
@@ -133,6 +150,25 @@ void Character::createNewStructure(int _num) {
         p->postSettings();
     }
     
+    //updateAttractors();
+    //create ParticleController
+    createParticleController();
+    
+}
+
+void Character::createParticleController() {
+    
+    int counter = 0;
+    
+    for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+        if( p->mEndOfLine ) {
+            
+            mParticleController.push_back( ParticleController( ) );
+            p->setParticleControllerID( counter );
+            counter++;
+            
+        }
+    }
 }
 
 void Character::createPhysics() {
@@ -144,8 +180,8 @@ void Character::createPhysics() {
     //int width = ci::app::getWindowWidth();
     //int height = ci::app::getWindowHeight();
    // mPhysics.setWorldSize(Vec3f(-width/2, -height, -width/2), Vec3f(width/2, height, width/2));
-    mPhysics.setWorldSize(Vec3f(-mRadius, -mRadius, -mRadius), Vec3f(mRadius, mRadius, mRadius));
-    //mPhysics.addConstraint(<#ConstraintT<cinder::Vec3<float> > *c#>);
+    //mPhysics.setWorldSize(Vec3f(-mRadius, -mRadius, -mRadius), Vec3f(mRadius, mRadius, mRadius));
+    mPhysics.setWorldSphere(mCenterPos, mRadius);
     
     mPhysics.setSectorCount(SECTOR_COUNT);
     
@@ -156,7 +192,36 @@ void Character::createPhysics() {
     
     //Collision
     mPhysics.enableCollision();
+    
+}
+
+void Character::updateAttractors() {
+    
+    
+    
+    //float littleRadius = mRadius - mRadius/3;
+    
+    //Attractors
+    /*
+    mAttractors[0] = mPhysics.makeParticle(Vec3f(-littleRadius, -littleRadius, -littleRadius));
+    mAttractors[1] = mPhysics.makeParticle(Vec3f(-littleRadius, littleRadius, littleRadius));
+    mAttractors[2] = mPhysics.makeParticle(Vec3f(littleRadius, -littleRadius, littleRadius));
+    mAttractors[3] = mPhysics.makeParticle(Vec3f(littleRadius, littleRadius, -littleRadius));
+    mAttractors[4] = mPhysics.makeParticle(Vec3f(-littleRadius, -littleRadius, littleRadius));
+    mAttractors[5] = mPhysics.makeParticle(Vec3f(-littleRadius, littleRadius, -littleRadius));
+    mAttractors[6] = mPhysics.makeParticle(Vec3f(littleRadius, -littleRadius, -littleRadius));
+    mAttractors[7] = mPhysics.makeParticle(Vec3f(littleRadius, littleRadius, littleRadius));
+    
+    for( int i=0; i<8; i++ ) {
+        mAttractors[i]->setRadius(5.0f)->setMass(1.0f)->setBounce(0.0f)->makeFixed();
         
+        for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+            if(!p->mEndOfLine) {
+             mPhysics.makeAttraction(mAttractors[i],p->getParticle(), 5.0f);
+            }
+        }
+    }
+     */
 }
 
 void Character::addRandomForce(float _f) {
@@ -175,7 +240,8 @@ void Character::setRadius(float _r) {
         scale(scaleFactor);
     
         mRadius = _r;
-        mPhysics.setWorldSize(Vec3f(-mRadius, -mRadius, -mRadius), Vec3f(mRadius, mRadius, mRadius));
+        mPhysics.setWorldSphere(mCenterPos, mRadius);
+        //mPhysics.setWorldSize(Vec3f(-mRadius, -mRadius, -mRadius), Vec3f(mRadius, mRadius, mRadius));
         
      }
 }
@@ -189,75 +255,42 @@ void Character::scale(float _s) {
         p->forceTo(pointVec);
 
 	}
+    
+    /*
+    for( int i=0; i<8; i++ ) {
+       
+        Vec3f pointVec = mAttractors[i]->getPosition();
+        pointVec *= _s;
+        mAttractors[i]->moveTo(pointVec);
+        
+    }
+    */
+    
 }
 
 void Character::setNextBeat( time_t _bang ) {
+    
     mNextBeat = _bang;
     
-    
-    if( counter == 4 ) { counter = 1; }
-    else { counter++; }
-    
-    cout << counter << endl;
 }
 
 void Character::dance() {
     
     Vec3f randVec = Rand::randVec3f() * Rand::randFloat(55);
     
-    
-    if( counter == 0 ) {
-        
-        for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
-            
-            if( !p->getActive() ) {
-                if( !p->mEndOfLine ) {
-                    Vec3f randVec = Rand::randVec3f() * Rand::randFloat(100);
-                    randVec += p->getPosition();
-                    p->moveTo(randVec, mNextBeat, false);
-                }
-            }
-        }
-    
-    } else {
-        
-        for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
-            if( !p->getActive() ) {
-                if( p->mEndOfLine ) {
-                    
-                    randVec *= -1;
-              
-                    
-                    Vec3f tmp = randVec + p->getPosition();
-                    p->moveTo(tmp, mNextBeat, false);
-                
-                }
-            }
-        }
-        
-    }
-    
-
-
-    /*
-    Vec3f randVec = Rand::randVec3f() * 10;
-    
     for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
-            
-      
-        if(p->mEndOfLine) {
-            
-            
-            Vec3f pointVec = randVec + p->getPosition();
-            cout << pointVec << endl;
-            
-            p->moveTo(pointVec);
-            
+        if( !p->getActive() ) {
+            if( p->mEndOfLine ) {
+                
+                randVec *= -1;
+                
+                
+                Vec3f tmp = randVec + p->getPosition();
+                p->moveTo(tmp, mNextBeat, false);
+                
+            }
         }
-      
-	}
-    
- */
+    }
 }
 
 void Character::moveTo(Vec2f _mousePos) {
@@ -281,6 +314,17 @@ void Character::update() {
     //Mainpoint update
     for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
         p->update();
+        
+        int pcID = p->getParticleControllerID();
+        if(pcID > -1) {
+            mParticleController[pcID].setTarget(p->getPosition());
+        }
+        
+    }
+    
+    //Particle Update
+    for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
+        p->update();
     }
     
     //physics update
@@ -290,7 +334,14 @@ void Character::update() {
 
 //RENAME
 void Character::test() {
+    
+    
+    //alles nach außen
+    
+    mDrawCharacter = !mDrawCharacter;
 
+    
+    
     //dance();
     
     /*
@@ -305,8 +356,8 @@ void Character::test() {
     }
     */
     
-    
     /*
+    
     for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
         
         if(p->mEndOfLine) {
@@ -318,13 +369,14 @@ void Character::test() {
             p->moveTo(pointVec);
             
         }
-	}*/
-    
+	}
+    */
 }
 
 void Character::draw() {
 
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
+    //glAlphaFunc(GL_GREATER, 0.5);
     
     glPushMatrix();
     
@@ -335,63 +387,86 @@ void Character::draw() {
         mForceTimer--;
     }
     
-    gl::enableAlphaBlending();
+    gl::enableAlphaBlending(); 
     gl::color(0,1,0,0.4);
+    
     gl::drawStrokedCircle(mCenterPos.xy(), mRadius);
+   //gl::drawSphere(mCenterPos, mRadius, 64);
     gl::disableAlphaBlending();
     
     gl::color(1,0,0);
     
-    glAlphaFunc(GL_GREATER, 0.5);
+   
     
-    for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
-        
-        gl::enableAlphaBlending();
-        
-        if(p->mEndOfLine) {
-           // gl::color(0.5,0.5,1);
-            gl::color(1,1,1,1);
-            if(ballImage) ballImage.enableAndBind();
-            
-            glEnable(GL_ALPHA_TEST);
-            
-            // draw ball
-            glPushMatrix();
-            glTranslatef(p->getPosition());
-           // glRotatef(0, 0, 1, 0);
-            
-            glBegin(GL_QUADS);
-            glTexCoord2f(0, 0); glVertex2f(-p->mRadius, -p->mRadius);
-            glTexCoord2f(1, 0); glVertex2f(p->mRadius, -p->mRadius);
-            glTexCoord2f(1, 1); glVertex2f(p->mRadius, p->mRadius);
-            glTexCoord2f(0, 1); glVertex2f(-p->mRadius, p->mRadius);
-            glEnd();
-            glPopMatrix();
-            
-            glDisable(GL_ALPHA_TEST);
-            
-            if(ballImage) ballImage.unbind();
-			glPopMatrix();
-            
-        }
-        else {
-            gl::color(1,1,0);
-            p->draw();
-        }
-        
-        
-        
-        gl::disableAlphaBlending();
-        
-        
-        for ( int i = 0; i<p->mNeighbours.size(); i++) {
-            gl::color(1,0.5,0);
-            gl::drawLine(p->getPosition(), p->mNeighbours[i]->getPosition());
-            gl::color(1,1,0);
-        }
-       
-	}
+    //bool jo = false;
     
+    if(mDrawCharacter) {
+    
+        for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+            
+            //jo = true;
+            
+            gl::enableAlphaBlending();
+            
+            if(p->mEndOfLine) {
+                gl::color(0.5,0.5,1);
+                //gl::color(1,1,1,1);
+                
+                /*
+                if(ballImage) ballImage.enableAndBind();
+                
+                glEnable(GL_ALPHA_TEST);
+                
+                // draw ball
+                glPushMatrix();
+                glTranslatef(p->getPosition());
+                
+                glBegin(GL_QUADS);
+                glTexCoord2f(0, 0); glVertex2f(-p->mRadius, -p->mRadius);
+                glTexCoord2f(1, 0); glVertex2f(p->mRadius, -p->mRadius);
+                glTexCoord2f(1, 1); glVertex2f(p->mRadius, p->mRadius);
+                glTexCoord2f(0, 1); glVertex2f(-p->mRadius, p->mRadius);
+                glEnd();
+                glPopMatrix();
+                
+                glDisable(GL_ALPHA_TEST);
+                
+                if(ballImage) ballImage.unbind();
+                glPopMatrix();
+                 */
+                p->draw();
+            }
+            else {
+                gl::color(1,1,0);
+                p->draw();
+            }
+            
+            
+            
+            gl::disableAlphaBlending();
+            
+            for ( int i = 0; i<p->mNeighbours.size(); i++) {
+                gl::color(1,0.5,0);
+                gl::drawLine(p->getPosition(), p->mNeighbours[i]->getPosition());
+                gl::color(1,1,0);
+            }
+            
+           
+        }
+    }
+    
+    for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
+        p->draw();
+    }
+    
+    gl::color(1,1,1,1);
+    /*
+    if(jo) {
+        for( int i=0; i<8; i++ ) {
+            gl::drawSphere(mAttractors[i]->getPosition(), mAttractors[i]->getRadius());
+        }
+    }
+    */
     
     glPopMatrix();
     

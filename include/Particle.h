@@ -7,14 +7,25 @@
 
 class Particle {
  public:
-	Particle();
 	Particle( ci::Vec3f _pos, ci::Vec3f _vel );
-	void update();
-	void draw();
+    void findPerlin();
+	void findVelocity();
+    void setPosition();
+    void update();
+	void render();
+    
 	
-	ci::Vec3f	mPos;
-    ci::Vec3f	mVel;
+	ci::Vec3f	mPosition;
+    ci::Vec3f	mVelocity;
+    ci::Vec3f   mPerlin;
 	
 	float		mRadius;
-	ci::Color	mColor;
+    ci::ColorA  mColor;
+    
+	float		mAge;
+	float		mLifeSpan;
+	
+	bool		mIsDead;
+    
+    
 };

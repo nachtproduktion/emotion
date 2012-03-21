@@ -2,31 +2,77 @@
 #include "cinder/Rand.h"
 #include "cinder/gl/gl.h"
 #include "cinder/app/AppBasic.h"
+#include "cinder/Perlin.h"
+#include "niko_functionen.h"
 
 using namespace ci;
 
-Particle::Particle()
+Perlin sPerlin( 2 );
+
+Particle::Particle( ci::Vec3f _pos, ci::Vec3f _vel)
 {
+	
+    mPosition       = _pos + Rand::randVec3f();// * Rand::randFloat( 20.0f );
+    mVelocity       = _vel * 0.01 + Rand::randVec3f() * 0.02;
+    
+    mPerlin         = Vec3f::zero();
+	
+	mRadius			= Rand::randFloat( 0.5f, 1.0f );
+    	
+	mIsDead			= false;
+	mAge			= 0.0f;
+	mLifeSpan		= Rand::randFloat( 80.0f, 100.0f );
+	
+    mColor  = ColorA(1.0f,1.0f,1.0f,1.0f);
+    
 }
 
-Particle::Particle( ci::Vec3f _pos, ci::Vec3f _vel )
+void Particle::findPerlin()
 {
-	mPos	= _pos;
-	mVel	= _vel;
-	mRadius	= 4.0f;
-    mColor  = Color(255,255,255);
-}	
+    int counter = ci::app::getElapsedFrames();
+	Vec3f noise = sPerlin.dfBm( mPosition * 0.01f + ci::Vec3f( 0, 0, counter / 100.0f ) );
+	mPerlin = noise.normalized() * 0.005f;
+}
+
+void Particle::findVelocity()
+{
+
+	mVelocity += mPerlin;
+    
+}
+
+void Particle::setPosition() {
+    mPosition += mVelocity * 0.5;
+}
 	
 void Particle::update()
 {
+    /*
+    static ci::Vec3f oldPosition = mPosition;
     
-    mVel = Rand::randVec3f();    
-	mPos += mVel;
+    //update Velocity
+    mVelocity = mPosition - oldPosition;
+    oldPosition = mPosition;
+     */
+    
+    findPerlin();
+    findVelocity();
+    setPosition();
+    
+    //AGING
+	mAge ++;
+    mColor.a = niko::mapping(mAge, 0, mLifeSpan, 1.0, 0.0, true);
+    
+	if( mAge > mLifeSpan ){
+		mIsDead = true;
+	}
     
 }
 
-void Particle::draw()
+void Particle::render()
 {
+    gl::enableAlphaBlending();
 	gl::color( mColor );
-	gl::drawSolidCircle( mPos.xy(), mRadius*mPos.z/500 );
+	gl::drawSphere( mPosition, mRadius );
+    gl::disableAlphaBlending();
 }

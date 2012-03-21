@@ -19,6 +19,7 @@
 #include "cinder/Perlin.h"
 
 #include "niko_functionen.h"
+#include "ParticleController.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -32,9 +33,6 @@ using namespace MSA;
 #define	GRAVITY					0.0f
 #define FORCE_AMOUNT			10.0f
 
-#define MAX_ATTRACTION			10.0f
-#define MIN_ATTRACTION			3.0f
-
 #define SECTOR_COUNT			1		// currently there is a bug at sector borders
 
 
@@ -45,8 +43,8 @@ struct MainPoint {
         mParticleID = _pID;
         mPhysic = _physics;
         
-        mMass	= 8.0f;
-		mBounce	= 0.5f;
+        mMass	= 4.0f;
+		mBounce	= 0.2f;
 		mRadius	= 20.0f;
         
         mEndOfLine     = true;
@@ -55,8 +53,10 @@ struct MainPoint {
         mTargetTime    = 0;
         mMoveBack      = false;
         mActive        = false;
+        
+        mParticleControllerID = -1;
                 
-        Physics::Particle3D* p = mPhysic->makeParticle(_pos);
+        Physics::Particle3D* p = mPhysic->makeParticle(_pos);        
         p->setMass(mMass)->setBounce(mBounce)->setRadius(mRadius)->enableCollision()->makeFree();
     }
     
@@ -69,23 +69,36 @@ struct MainPoint {
 
     }
     
+    void setParticleControllerID( int _id ) {
+        mParticleControllerID = _id;
+    }
+    
+    int getParticleControllerID() {
+        return mParticleControllerID;
+    }
+    
+    void setMass( float _m ) {
+        mMass      = _m;
+        Physics::Particle3D *p = getParticle();
+        p->setMass( mMass );
+        
+    }
+    
+    void setFixed() {
+        Physics::Particle3D *p = getParticle();
+        p->makeFixed();
+    } 
+    
     void postSettings() {
         if( mNeighbours.size() == 0 ) { mEndOfLine = true; }
         else if( mNeighbours.size() == 1 && mParticleID == 0 ) { 
             mEndOfLine = true; 
-            
-            mMass      = 6.0f;
-            Physics::Particle3D *p = getParticle();
-            p->setMass( mMass );
+            setMass(4.0f);
             
         }
         else { 
             mEndOfLine = false; 
-            
-            mMass      = 120.0f;
-            Physics::Particle3D *p = getParticle();
-            p->setMass( mMass );
-            p->isFixed();
+            setMass(10.0f);
         }
     }
     
@@ -238,6 +251,7 @@ struct MainPoint {
     time_t  mSetTime;
     bool    mMoveBack;
     bool    mActive;
+    int     mParticleControllerID;
     
     
     std::vector<  MainPoint* > mNeighbours;
@@ -258,19 +272,22 @@ class Character {
     
     void draw();
     void update();
-    void mkPoint(MainPoint *lastPoint);
-    void createNewStructure(int _num);
+    void mkPoint(MainPoint *lastPoint, bool firstPoint = false);
+    void createNewStructure( int _num );
     void createPhysics();
-    void setRadius(float _r);
-    void scale(float _s);
+    void createParticleController(); 
+    void updateAttractors();
+    void setRadius( float _r );
+    void scale( float _s );
     int  getRandPointNumber();
-    void addRandomForce(float _f);
-    void moveTo(Vec2f _mousePos);
+    void addRandomForce( float _f );
+    void moveTo( Vec2f _mousePos );
     void dance();
     //RENAME
     void test();
     void setNextBeat( time_t _bang );
    
+    bool        mDrawCharacter;
     
     ci::Vec3f	mCenterPos;
     float       mRadius;
@@ -278,15 +295,17 @@ class Character {
     int         mMainPointsLeft;
     bool        mOpenLines;
     time_t      mNextBeat;
-    int         counter;
     
     std::vector<MainPoint>  mMainPoints;
     Perlin      mPerlin;
     
+    //Particle
+    std::vector<ParticleController>  mParticleController;
     
     //Physics
     Physics::World3D        mPhysics;
     int                     mForceTimer;
+    //Physics::Particle3D*    mAttractors[8];
     
     
     //

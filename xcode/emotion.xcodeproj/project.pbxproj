@@ -20,6 +20,7 @@
 		23A75423150FBE2200666518 /* Color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753BA150FBE2200666518 /* Color.cpp */; };
 		23A75424150FBE2200666518 /* MSACoreGL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753C1150FBE2200666518 /* MSACoreGL.cpp */; };
 		23A7542A150FBE2200666518 /* MSAObjCPointer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753D2150FBE2200666518 /* MSAObjCPointer.cpp */; };
+		23EB8A8115191D7A00CC3D2D /* ParticleController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */; };
 		23F904B2150BE0370040F1A3 /* Particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F904B1150BE0370040F1A3 /* Particle.cpp */; };
 		23F904BB150BFA460040F1A3 /* Character.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F904BA150BFA460040F1A3 /* Character.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
@@ -71,6 +72,8 @@
 		23A75416150FBE2200666518 /* MSAPhysicsSpring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSAPhysicsSpring.h; sourceTree = "<group>"; };
 		23A75417150FBE2200666518 /* MSAPhysicsWorld.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSAPhysicsWorld.h; sourceTree = "<group>"; };
 		23CE9750150C147D00E0A515 /* niko_functionen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = niko_functionen.h; path = ../include/niko_functionen.h; sourceTree = "<group>"; };
+		23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParticleController.cpp; path = ../src/ParticleController.cpp; sourceTree = "<group>"; };
+		23EB8A8315191D8100CC3D2D /* ParticleController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParticleController.h; path = ../include/ParticleController.h; sourceTree = "<group>"; };
 		23F904AF150BE0330040F1A3 /* Particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Particle.h; path = ../include/Particle.h; sourceTree = "<group>"; };
 		23F904B1150BE0370040F1A3 /* Particle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Particle.cpp; path = ../src/Particle.cpp; sourceTree = "<group>"; };
 		23F904BA150BFA460040F1A3 /* Character.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Character.cpp; path = ../src/Character.cpp; sourceTree = "<group>"; };
@@ -109,10 +112,11 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				00BAE6590E7ED9C10018A608 /* emotionApp.cpp */,
+				23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */,
 				238F2B741514B49500673859 /* BeatController.cpp */,
 				23F904BA150BFA460040F1A3 /* Character.cpp */,
 				23F904B1150BE0370040F1A3 /* Particle.cpp */,
-				00BAE6590E7ED9C10018A608 /* emotionApp.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -264,6 +268,7 @@
 			children = (
 				32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */,
 				23CE9750150C147D00E0A515 /* niko_functionen.h */,
+				23EB8A8315191D8100CC3D2D /* ParticleController.h */,
 				23F904BC150BFA4E0040F1A3 /* Character.h */,
 				23F904AF150BE0330040F1A3 /* Particle.h */,
 				238F2B771514B49B00673859 /* BeatController.h */,
@@ -356,6 +361,7 @@
 				23A75424150FBE2200666518 /* MSACoreGL.cpp in Sources */,
 				23A7542A150FBE2200666518 /* MSAObjCPointer.cpp in Sources */,
 				238F2B751514B49500673859 /* BeatController.cpp in Sources */,
+				23EB8A8115191D7A00CC3D2D /* ParticleController.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

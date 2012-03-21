@@ -16,7 +16,7 @@ using namespace std;
 
 namespace niko {
  
-    inline float mapping(float value, float inputMin, float inputMax, float outputMin, float outputMax, bool clamp) {
+    inline float mapping(float value, float inputMin, float inputMax, float outputMin, float outputMax, bool clamp = false) {
         
         if (fabs(inputMin - inputMax) < FLT_EPSILON){
             return outputMin;
