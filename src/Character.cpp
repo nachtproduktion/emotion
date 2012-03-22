@@ -11,13 +11,14 @@ using namespace std;
 
 Character::Character()
 {
-    mCenterPos = Vec3f::zero();
+    mCenterPos = Vec3f::zero(); //Vec3f(20,100,5);
     mRadius = 100.0f;
     
     mForceTimer = false;
     mNumberOfMainPoints = 0;
+    mNextBeat = niko::getTimeMS();
     
-    mDrawCharacter = false;
+    mDrawCharacter = true;
     
 }
 
@@ -28,8 +29,9 @@ Character::Character( ci::Vec3f _pos, float _radius )
     
     mForceTimer = false;
     mNumberOfMainPoints = 0;
+    mNextBeat = niko::getTimeMS();
     
-    mDrawCharacter = false;
+    mDrawCharacter = true;
 
 }
 
@@ -48,7 +50,7 @@ void Character::mkPoint(MainPoint *lastPoint, bool firstPoint) {
         mNumberOfMainPoints--;
     }
     
-    cout << newPoints << endl;   //DEBUG
+    //cout << newPoints << endl;   //DEBUG
 
     
     for(int i = 0; i<newPoints; i++) {
@@ -66,7 +68,7 @@ void Character::mkPoint(MainPoint *lastPoint, bool firstPoint) {
         //Neue Koordinaten berechnen
         ci::Vec3f randVec = Rand::randVec3f();
         randVec.normalize();
-        randVec *= Rand::randFloat(30.0f,100.0f);                   // BERECHNUNG?!?!?!??!!?
+        randVec *= Rand::randFloat(30.0f,80.0f);                   // BERECHNUNG?!?!?!??!!?
         randVec += lastPoint->getPosition();
         
         //randVec *= Rand::randFloat(mRadius);
@@ -150,7 +152,12 @@ void Character::createNewStructure(int _num) {
         p->postSettings();
     }
     
-    //updateAttractors();
+    //Create EmoAttractors
+    mFrustrationAtt.create(&mPhysics, mRadius, mCenterPos);
+    mFrustrationAtt.setFrustration();
+    mEngagementAtt.create(&mPhysics, mRadius, mCenterPos);
+    mEngagementAtt.setEngagement();
+    
     //create ParticleController
     createParticleController();
     
@@ -224,6 +231,34 @@ void Character::updateAttractors() {
      */
 }
 
+void Character::updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement ) {
+    
+    static float oldFrustration = 0;
+    static float oldEngagement = 0;
+//    static float oldMeditation = 0;
+//    static float oldExcitement = 0;
+    
+    if(oldFrustration != _frustration) {
+        oldFrustration = _frustration;
+        mFrustrationAtt.update( _frustration );
+    }
+   
+    if(oldEngagement != _engagement) {
+        oldEngagement = _engagement;
+        mEngagementAtt.update( _engagement );
+    }
+/*    
+    if(oldMeditation != _meditation) {
+        oldMeditation = _meditation;
+    }
+    
+    if(oldExcitement != _excitement) {
+        oldExcitement = _excitement;
+    }
+*/    
+    
+}
+
 void Character::addRandomForce(float _f) {
     mForceTimer = _f;
     for(int i=0; i<mPhysics.numberOfParticles(); i++) {
@@ -232,7 +267,7 @@ void Character::addRandomForce(float _f) {
     }
 }
 
-void Character::setRadius(float _r) {
+void Character::setRadius( float _r ) {
     
     if( _r != mRadius ) {
     
@@ -241,12 +276,11 @@ void Character::setRadius(float _r) {
     
         mRadius = _r;
         mPhysics.setWorldSphere(mCenterPos, mRadius);
-        //mPhysics.setWorldSize(Vec3f(-mRadius, -mRadius, -mRadius), Vec3f(mRadius, mRadius, mRadius));
         
      }
 }
 
-void Character::scale(float _s) {
+void Character::scale( float _s ) {
     
     for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
         
@@ -256,15 +290,8 @@ void Character::scale(float _s) {
 
 	}
     
-    /*
-    for( int i=0; i<8; i++ ) {
-       
-        Vec3f pointVec = mAttractors[i]->getPosition();
-        pointVec *= _s;
-        mAttractors[i]->moveTo(pointVec);
-        
-    }
-    */
+    mFrustrationAtt.changeWorld( mCenterPos, mRadius );
+    mEngagementAtt.changeWorld( mCenterPos, mRadius );
     
 }
 
@@ -455,18 +482,17 @@ void Character::draw() {
         }
     }
     
+    //Draw EmoAttractors
+    mFrustrationAtt.render();
+    mEngagementAtt.render();
+    
+    
     for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
         p->draw();
     }
     
-    gl::color(1,1,1,1);
-    /*
-    if(jo) {
-        for( int i=0; i<8; i++ ) {
-            gl::drawSphere(mAttractors[i]->getPosition(), mAttractors[i]->getRadius());
-        }
-    }
-    */
+   
+    
     
     glPopMatrix();
     

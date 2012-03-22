@@ -16,6 +16,8 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+int fps;
+
 class emotionApp : public AppBasic {
   public:
     void prepareSettings( Settings *settings );
@@ -23,6 +25,7 @@ class emotionApp : public AppBasic {
 	void mouseDown( MouseEvent event );	
     void mouseDrag( MouseEvent event );
 	void update();
+    void checkEmotions();
 	void draw();
     void keyDown( KeyEvent event );
     
@@ -35,7 +38,6 @@ class emotionApp : public AppBasic {
     
 	// PARAMS
 	params::InterfaceGl	mParams;
-    int            mFPS;
     
     // CAMERA
 	CameraPersp			mCam;
@@ -45,6 +47,11 @@ class emotionApp : public AppBasic {
     
     //ParticleController mParticleController;
 	
+    //Emotion
+    float               mFrustration;
+    float               mEngagement;
+    float               mExcitement;
+    float               mMeditation;
     
 };
 
@@ -66,9 +73,10 @@ void emotionApp::setup()
 	mCam.setPerspective( 75.0f, getWindowAspectRatio(), 5.0f, 2000.0f );
 	
 	// SETUP PARAMS
-	mParams = params::InterfaceGl( "Kamera", Vec2i( 200, 300 ) );
+	mParams = params::InterfaceGl( "Kamera", Vec2i( 200, 350 ) );
+    mParams.addParam( "Framerate", &fps, "", true);
+    mParams.addSeparator();
 	mParams.addParam( "Scene Rotation", &mSceneRotation, "opened=1" );
-	mParams.addSeparator();
 	mParams.addParam( "Eye Distance", &mCameraDistance, "min=50.0 max=1500.0 step=50.0 keyIncr=s keyDecr=w" );
     mParams.addSeparator();
     mParams.addParam( "S-Radius", &mSphereRadius, "min=20 max=500 step=1" );
@@ -77,7 +85,10 @@ void emotionApp::setup()
     mParams.addSeparator();
     mParams.addParam( "BPM", &mBPM, "min=1 max=200 step=1" );
     mParams.addSeparator();
-    mParams.addParam( "Framerate", &mFPS, "" );
+    mParams.addParam( "Frustration", &mFrustration, "min=0 max=100 step=1" );
+    mParams.addParam( "Engagement", &mEngagement, "min=0 max=100 step=1" );
+    mParams.addParam( "Meditation", &mMeditation, "min=0 max=100 step=1" );
+    mParams.addParam( "Excitement", &mExcitement, "min=0 max=100 step=1" );
 
     //CHARACTER
     mCPoints = 5;
@@ -87,11 +98,20 @@ void emotionApp::setup()
     //BeatController
     mBPM    = 90;
     
+    //Emotion
+    mFrustration = 0;
+    mEngagement = 0;
+    mMeditation = 0;
+    mExcitement = 0;
+    
+    //Random
+    Rand::randomize();
+    
 }
 
 void emotionApp::update()
 {
-    mFPS = getAverageFps();
+    fps = getAverageFps();
     
     // UPDATE CAMERA
 	mEye = Vec3f( 0.0f, 0.0f, mCameraDistance );
@@ -103,6 +123,9 @@ void emotionApp::update()
     //mSceneRotation *= Quatf(0,0.01f,0.0f);
     //mParticleController.update();
     
+    //Emotion UPDATe
+    checkEmotions();
+    
     ///////////
     mCharacter.setRadius(mSphereRadius);
     mCharacter.update();
@@ -113,6 +136,12 @@ void emotionApp::update()
     //TEST
    // if( getElapsedFrames()%10 == 0 ) cout << getElapsedFrames() << endl;
    
+}
+
+void emotionApp::checkEmotions() {
+    
+    mCharacter.updateEmotions(mFrustration, mEngagement, mMeditation, mExcitement);
+
 }
 
 void emotionApp::draw()

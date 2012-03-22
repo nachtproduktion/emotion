@@ -15,6 +15,7 @@
 		00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
 		00BAE65A0E7ED9C10018A608 /* emotionApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00BAE6590E7ED9C10018A608 /* emotionApp.cpp */; };
 		00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 00CCAF14116A9FEE008396D5 /* CinderApp.icns */; };
+		2371E4F2151ABDE3009745BD /* EmoAttractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2371E4F1151ABDE3009745BD /* EmoAttractor.cpp */; };
 		238A25461515261500F233DB /* kopf.png in Resources */ = {isa = PBXBuildFile; fileRef = 238A25451515261500F233DB /* kopf.png */; };
 		238F2B751514B49500673859 /* BeatController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 238F2B741514B49500673859 /* BeatController.cpp */; };
 		23A75423150FBE2200666518 /* Color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753BA150FBE2200666518 /* Color.cpp */; };
@@ -40,6 +41,8 @@
 		00CCAF14116A9FEE008396D5 /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = CinderApp.icns; path = ../resources/CinderApp.icns; sourceTree = SOURCE_ROOT; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
+		2371E4F1151ABDE3009745BD /* EmoAttractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmoAttractor.cpp; path = ../src/EmoAttractor.cpp; sourceTree = "<group>"; };
+		2371E4F4151ABDF3009745BD /* EmoAttractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmoAttractor.h; path = ../include/EmoAttractor.h; sourceTree = "<group>"; };
 		238A25451515261500F233DB /* kopf.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = kopf.png; path = ../resources/kopf.png; sourceTree = "<group>"; };
 		238F2B741514B49500673859 /* BeatController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BeatController.cpp; path = ../src/BeatController.cpp; sourceTree = "<group>"; };
 		238F2B771514B49B00673859 /* BeatController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BeatController.h; path = ../include/BeatController.h; sourceTree = "<group>"; };
@@ -113,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				00BAE6590E7ED9C10018A608 /* emotionApp.cpp */,
+				2371E4F1151ABDE3009745BD /* EmoAttractor.cpp */,
 				23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */,
 				238F2B741514B49500673859 /* BeatController.cpp */,
 				23F904BA150BFA460040F1A3 /* Character.cpp */,
@@ -266,6 +270,7 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				2371E4F4151ABDF3009745BD /* EmoAttractor.h */,
 				32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */,
 				23CE9750150C147D00E0A515 /* niko_functionen.h */,
 				23EB8A8315191D8100CC3D2D /* ParticleController.h */,
@@ -362,6 +367,7 @@
 				23A7542A150FBE2200666518 /* MSAObjCPointer.cpp in Sources */,
 				238F2B751514B49500673859 /* BeatController.cpp in Sources */,
 				23EB8A8115191D7A00CC3D2D /* ParticleController.cpp in Sources */,
+				2371E4F2151ABDE3009745BD /* EmoAttractor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

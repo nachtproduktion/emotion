@@ -20,6 +20,7 @@
 
 #include "niko_functionen.h"
 #include "ParticleController.h"
+#include "EmoAttractor.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -35,6 +36,8 @@ using namespace MSA;
 
 #define SECTOR_COUNT			1		// currently there is a bug at sector borders
 
+extern int fps;
+
 
 struct MainPoint {
 	MainPoint() {}
@@ -45,7 +48,7 @@ struct MainPoint {
         
         mMass	= 4.0f;
 		mBounce	= 0.2f;
-		mRadius	= 20.0f;
+		mRadius	= 5.0f;
         
         mEndOfLine     = true;
         
@@ -77,6 +80,13 @@ struct MainPoint {
         return mParticleControllerID;
     }
     
+    void setRadius( float _r ) {
+        mRadius      = _r;
+        Physics::Particle3D *p = getParticle();
+        p->setRadius( mRadius );
+        
+    }
+    
     void setMass( float _m ) {
         mMass      = _m;
         Physics::Particle3D *p = getParticle();
@@ -89,6 +99,16 @@ struct MainPoint {
         p->makeFixed();
     } 
     
+    bool getFixed() {
+        Physics::Particle3D *p = getParticle();
+        return p->isFixed();
+    } 
+    
+    void setFree() {
+        Physics::Particle3D *p = getParticle();
+        p->makeFree();
+    } 
+    
     void postSettings() {
         if( mNeighbours.size() == 0 ) { mEndOfLine = true; }
         else if( mNeighbours.size() == 1 && mParticleID == 0 ) { 
@@ -98,8 +118,19 @@ struct MainPoint {
         }
         else { 
             mEndOfLine = false; 
-            setMass(10.0f);
+            if(getFixed()) {
+                setMass(150.0f);
+                setRadius(10.0f);
+                setFree();
+            }
+            else { 
+                setMass(10.0f);
+                setRadius(7.0f);
+            }
+            
+            
         }
+        
     }
     
     Vec3f getPosition() {
@@ -206,11 +237,12 @@ struct MainPoint {
                 
                 //EaseInExpo();
                 
-                /*
-                //float time = math<float>::clamp( fmod( getElapsedSeconds() * TWEEN_SPEED, 1 ) * 1.5f, 0, 1 );
                 
+                //float time = math<float>::clamp( fmod( getElapsedSeconds() * TWEEN_SPEED, 1 ) * 1.5f, 0, 1 );
+                 /*
+
                 //Get Frames pro MS
-                float fpms = ci::app::getFrameRate() / 1000;
+                float fpms = fps / 1000;
                 
                 //check Frame in timeDelta
                 float fptd = fpms * timeDelta;
@@ -220,7 +252,6 @@ struct MainPoint {
                 newPosition += (mTarget - pPosition) / fptd;
                 
                  */
-                 
                 //set new Pos
                 p->moveTo(newPosition);
             }
@@ -229,7 +260,7 @@ struct MainPoint {
     
     void draw() { 
         Physics::Particle3D* p = getParticle();
-        gl::drawSphere (p->getPosition(), 4.0f);
+        gl::drawSphere (p->getPosition(), mRadius);
         
         /* DEBUG
         if(mEndOfLine) {
@@ -277,6 +308,7 @@ class Character {
     void createPhysics();
     void createParticleController(); 
     void updateAttractors();
+    void updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement );
     void setRadius( float _r );
     void scale( float _s );
     int  getRandPointNumber();
@@ -306,6 +338,10 @@ class Character {
     Physics::World3D        mPhysics;
     int                     mForceTimer;
     //Physics::Particle3D*    mAttractors[8];
+    
+    //EmoAttractos
+    EmoAttractor            mFrustrationAtt;
+    EmoAttractor            mEngagementAtt;
     
     
     //
