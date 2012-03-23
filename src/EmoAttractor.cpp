@@ -42,7 +42,7 @@ void EmoAttractor::create( MSA::Physics::World3D * _physics, float _worldRadius,
     
     mExists = true;
     
-    cout << "EmoAttractor erstellt " << endl;
+    // cout << "EmoAttractor erstellt " << endl;
     
 }
 
@@ -69,10 +69,12 @@ void EmoAttractor::calcStartPositions() {
 }
 
 void EmoAttractor::makeAttractors() {
+
     for( int i = 0; i<4; i++) {
         mAttractor[i] = mPhysics->makeParticle(mAPositions[i]);
         mAttractor[i]->setRadius(mARadius)->setMass(mAMass)->setBounce(0.0f)->makeOutside(true)->makeFixed();
     }
+
 }
 
 void EmoAttractor::update( float _level, float _min, float _max ) {

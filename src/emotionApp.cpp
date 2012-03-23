@@ -5,7 +5,7 @@
 #include "cinder/Vector.h"
 #include "cinder/Utilities.h"
 #include "cinder/params/Params.h"
-#include "cinder/Camera.h"
+#include "cinder/MayaCamUI.h"
 
 #include "BeatController.h"
 #include "ParticleController.h"
@@ -44,6 +44,7 @@ class emotionApp : public AppBasic {
 	Quatf				mSceneRotation;
 	float				mCameraDistance;
 	Vec3f				mEye, mCenter, mUp;
+    
     
     //ParticleController mParticleController;
 	
