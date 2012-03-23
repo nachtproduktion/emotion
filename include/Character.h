@@ -36,6 +36,8 @@ using namespace MSA;
 
 #define SECTOR_COUNT			1		// currently there is a bug at sector borders
 
+#define CENTER                  ci::Vec3f::zero()
+
 extern int fps;
 
 
@@ -299,7 +301,7 @@ struct MainPoint {
 class Character {
  public:
 	Character();
-    Character(ci::Vec3f _pos, float _radius);
+    Character( ci::Vec3f _pos, float _radius, Quatf _rotation );
     
     void draw();
     void update();
@@ -313,7 +315,7 @@ class Character {
     void scale( float _s );
     int  getRandPointNumber();
     void addRandomForce( float _f );
-    void moveTo( Vec2f _mousePos );
+    void move(Vec3f _position, Quatf _rotation);
     void dance();
     //RENAME
     void test();
@@ -321,12 +323,16 @@ class Character {
    
     bool        mDrawCharacter;
     
-    ci::Vec3f	mCenterPos;
     float       mRadius;
     int         mNumberOfMainPoints;
     int         mMainPointsLeft;
     bool        mOpenLines;
     time_t      mNextBeat;
+    
+    //VIEWING
+    ci::Vec3f   mCenterPosition;
+    Quatf       mRotation;
+    
     
     std::vector<MainPoint>  mMainPoints;
     Perlin      mPerlin;

@@ -5,7 +5,8 @@
 #include "cinder/Vector.h"
 #include "cinder/Utilities.h"
 #include "cinder/params/Params.h"
-#include "cinder/MayaCamUI.h"
+#include "cinder/Camera.h"
+#include "cinder/Arcball.h"
 
 #include "BeatController.h"
 #include "ParticleController.h"
@@ -22,32 +23,40 @@ class emotionApp : public AppBasic {
   public:
     void prepareSettings( Settings *settings );
 	void setup();
-	void mouseDown( MouseEvent event );	
-    void mouseDrag( MouseEvent event );
+    void resize( ResizeEvent event );
 	void update();
     void checkEmotions();
+    void updateCharacters();
 	void draw();
     void keyDown( KeyEvent event );
+    void keyUp( KeyEvent event );
+    void mouseDown( MouseEvent event );	
+    void mouseDrag( MouseEvent event );
     
-    Character mCharacter;
-    int mCPoints, mFAmount;
-    float mSphereRadius;
+    //Spezial
+    char                mKeyDown;
+    Vec2i               mMouseDown;
+    
+    //Character
+    Character           mCharacter;
+    int                 mCPoints, mFAmount;
+    float               mSphereRadius;
 	
-    BeatController mBeatController;
-    int            mBPM;
+    BeatController      mBeatController;
+    int                 mBPM;
     
 	// PARAMS
 	params::InterfaceGl	mParams;
     
     // CAMERA
 	CameraPersp			mCam;
-	Quatf				mSceneRotation;
 	float				mCameraDistance;
-	Vec3f				mEye, mCenter, mUp;
     
-    
-    //ParticleController mParticleController;
-	
+    //ArcBall
+    Arcball             mArcball;
+    Vec3f               mCharPosition;
+    Vec3f               mLastCharPosition;
+    	
     //Emotion
     float               mFrustration;
     float               mEngagement;
@@ -64,21 +73,21 @@ void emotionApp::prepareSettings( Settings *settings )
 
 void emotionApp::setup()
 {
-
     
     // SETUP CAMERA
 	mCameraDistance = 500.0f;
-	mEye			= Vec3f( 0.0f, 0.0f, mCameraDistance );
-	mCenter			= Vec3f::zero();
-	mUp				= Vec3f::yAxis();
-	mCam.setPerspective( 75.0f, getWindowAspectRatio(), 5.0f, 2000.0f );
+	mCam.setPerspective( 50.0f, getWindowAspectRatio(), 0.1f, 10000.0f );
+    mCam.lookAt( Vec3f( 0, 0, mCameraDistance ), Vec3f::zero() );
+    
+    //SPEZIAL
+    mKeyDown = false;
 	
 	// SETUP PARAMS
-	mParams = params::InterfaceGl( "Kamera", Vec2i( 200, 350 ) );
+	mParams = params::InterfaceGl( "Kamera", Vec2i( 200, 300 ) );
     mParams.addParam( "Framerate", &fps, "", true);
     mParams.addSeparator();
-	mParams.addParam( "Scene Rotation", &mSceneRotation, "opened=1" );
-	mParams.addParam( "Eye Distance", &mCameraDistance, "min=50.0 max=1500.0 step=50.0 keyIncr=s keyDecr=w" );
+	//mParams.addParam( "Scene Rotation", &mSceneRotation, "opened=1" );
+	mParams.addParam( "Eye Distance", &mCameraDistance, "min=50.0 max=1500.0 step=50.0" ); //keyIncr=s keyDecr=w" );
     mParams.addSeparator();
     mParams.addParam( "S-Radius", &mSphereRadius, "min=20 max=500 step=1" );
     mParams.addParam( "C-Points", &mCPoints, "min=1 max=50 step=1" );
@@ -95,7 +104,10 @@ void emotionApp::setup()
     mCPoints = 5;
     mFAmount = 10;
     mSphereRadius = 100.0f;
-        
+    
+    mCharPosition = ci::Vec3f::zero();
+    mLastCharPosition = ci::Vec3f::zero();
+    
     //BeatController
     mBPM    = 90;
     
@@ -110,15 +122,23 @@ void emotionApp::setup()
     
 }
 
+void emotionApp::resize( ResizeEvent event )
+{
+	mArcball.setWindowSize( getWindowSize() );
+	mArcball.setCenter( getWindowCenter() );
+	mArcball.setRadius( 150 );
+    
+    mCam.setPerspective( 50.0f, getWindowAspectRatio(), 0.1f, 10000.0f );
+	gl::setMatrices( mCam );	
+    
+}
+
 void emotionApp::update()
 {
     fps = getAverageFps();
     
     // UPDATE CAMERA
-	mEye = Vec3f( 0.0f, 0.0f, mCameraDistance );
-	mCam.lookAt( mEye, mCenter, mUp );
-	gl::setMatrices( mCam );
-	gl::rotate( mSceneRotation );
+	mCam.lookAt( Vec3f( 0, 0, mCameraDistance ), Vec3f::zero() );
     
     
     //mSceneRotation *= Quatf(0,0.01f,0.0f);
@@ -126,17 +146,19 @@ void emotionApp::update()
     
     //Emotion UPDATe
     checkEmotions();
-    
+    updateCharacters();
     ///////////
-    mCharacter.setRadius(mSphereRadius);
-    mCharacter.update();
 
     if( ci::app::getElapsedFrames() > 10 ) 
-    mBeatController.update();
-    
-    //TEST
-   // if( getElapsedFrames()%10 == 0 ) cout << getElapsedFrames() << endl;
+        mBeatController.update();
    
+}
+
+void emotionApp::updateCharacters() {
+    mCharacter.setRadius(mSphereRadius);
+    mCharacter.move(mCharPosition, mArcball.getQuat());
+    mCharacter.update();
+
 }
 
 void emotionApp::checkEmotions() {
@@ -147,23 +169,26 @@ void emotionApp::checkEmotions() {
 
 void emotionApp::draw()
 {
-	// clear out the window with black
-    gl::clear( Color( 0, 0, 0.01f ), true );
-	gl::enableDepthRead();
-	gl::enableDepthWrite();
     
+    //Kamera
+    gl::setMatrices( mCam );
+    
+	// clear out the window with black
+	gl::enableDepthWrite();
+	gl::enableDepthRead();
+	
+	gl::clear( Color( 0.0f, 0.1f, 0.2f ) );
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    
+    //Render Rücken von Objekten?!
+	glDisable( GL_CULL_FACE );
+    
+	
     
     mCharacter.draw();
     
     //mParticleController.draw();
     
-    /*
-    //DEBUG
-    if( mBeatController.newBeat ) {
-        gl::color(0, 255, 0);
-        gl::drawSolidCircle(Vec2d(0,0), 500.0f);
-    }
-     */
     
     // DRAW PARAMS WINDOW
 	params::InterfaceGl::draw();
@@ -186,35 +211,45 @@ void emotionApp::keyDown( KeyEvent event )
         case 't': mCharacter.test(); break;
         case 'b': mBeatController.setBPM( mBPM ); break;
         case ' ': mBeatController.bang(); break;
+        case 'q': 
+        case 'w': mKeyDown = event.getChar(); break;
     }
 
 }
 
-void emotionApp::mouseDrag( MouseEvent event ) {
-    mouseDown( event );
+void emotionApp::keyUp( KeyEvent event ) {
+    
+    mKeyDown = false;
+    
 }
-
 
 void emotionApp::mouseDown( MouseEvent event )
 {
-    //mCharacter.moveTo( event.getPos() );
+	Vec2i P = event.getPos();
+	P.y = getWindowHeight() - P.y;
+	mArcball.mouseDown( P );
     
-    //Transform to World
-    
-    float width = ci::app::getWindowWidth();
-    float height = ci::app::getWindowHeight();
-    
-    float posX = niko::mapping(event.getX(), 0, width, -width/2, width/2, true);
-    float posY = niko::mapping(event.getY(), 0, height, height/2, -height/2, true);
-    float posZ = 0;
-    
-    ci::Vec3f t = ci::Vec3f( posX, posY, posZ);
-    
-    //mParticleController.setTarget( t );
-    
+    mMouseDown = event.getPos();
+    mLastCharPosition = mCharPosition;
 }
 
 
+void emotionApp::mouseDrag( MouseEvent event ) {
+	
+    if(!mKeyDown) {
+        Vec2i P = event.getPos();
+        P.y = getWindowHeight() - P.y;
+        mArcball.mouseDrag( P );
+    } else if( mKeyDown == 'q') {
+        //x+y achse
+        mCharPosition.x = mLastCharPosition.x + (event.getX() - mMouseDown.x);
+        mCharPosition.y = mLastCharPosition.y - (event.getY() - mMouseDown.y);
+    } else if( mKeyDown == 'w') {
+        //z achse
+        mCharPosition.z = mLastCharPosition.z + (event.getY() - mMouseDown.y);
+    } 
+  
+}
 
 
 CINDER_APP_BASIC( emotionApp, RendererGl )

@@ -11,7 +11,9 @@ using namespace std;
 
 Character::Character()
 {
-    mCenterPos = Vec3f::zero(); //Vec3f(20,100,5);
+    mCenterPosition = Vec3f::zero(); //Vec3f(20,100,5);
+    mRotation   = Quatf();
+    
     mRadius = 100.0f;
     
     mForceTimer = false;
@@ -22,9 +24,11 @@ Character::Character()
     
 }
 
-Character::Character( ci::Vec3f _pos, float _radius )
+Character::Character( ci::Vec3f _pos, float _radius, Quatf _rotation )
 {
-    mCenterPos = _pos;
+    mCenterPosition = _pos;
+    mRotation   = _rotation;
+    
     mRadius = _radius;
     
     mForceTimer = false;
@@ -136,7 +140,7 @@ void Character::createNewStructure(int _num) {
     mMainPoints.reserve( _num );    
     
     //First Point
-    mMainPoints.push_back( MainPoint( mCenterPos, &mPhysics, mNumberOfMainPoints - mMainPointsLeft ) );
+    mMainPoints.push_back( MainPoint( CENTER, &mPhysics, mNumberOfMainPoints - mMainPointsLeft ) );
     mMainPointsLeft--;
     
     mMainPoints.back().setFixed();
@@ -153,9 +157,9 @@ void Character::createNewStructure(int _num) {
     }
     
     //Create EmoAttractors
-    mFrustrationAtt.create(&mPhysics, mRadius, mCenterPos);
+    mFrustrationAtt.create(&mPhysics, mRadius, CENTER);
     mFrustrationAtt.setFrustration();
-    mEngagementAtt.create(&mPhysics, mRadius, mCenterPos);
+    mEngagementAtt.create(&mPhysics, mRadius, CENTER);
     mEngagementAtt.setEngagement();
     
     //create ParticleController
@@ -188,7 +192,7 @@ void Character::createPhysics() {
     //int height = ci::app::getWindowHeight();
    // mPhysics.setWorldSize(Vec3f(-width/2, -height, -width/2), Vec3f(width/2, height, width/2));
     //mPhysics.setWorldSize(Vec3f(-mRadius, -mRadius, -mRadius), Vec3f(mRadius, mRadius, mRadius));
-    mPhysics.setWorldSphere(mCenterPos, mRadius);
+    mPhysics.setWorldSphere(CENTER, mRadius);
     
     mPhysics.setSectorCount(SECTOR_COUNT);
     
@@ -275,7 +279,7 @@ void Character::setRadius( float _r ) {
         scale(scaleFactor);
     
         mRadius = _r;
-        mPhysics.setWorldSphere(mCenterPos, mRadius);
+        mPhysics.setWorldSphere(CENTER, mRadius);
         
      }
 }
@@ -290,8 +294,8 @@ void Character::scale( float _s ) {
 
 	}
     
-    mFrustrationAtt.changeWorld( mCenterPos, mRadius );
-    mEngagementAtt.changeWorld( mCenterPos, mRadius );
+    mFrustrationAtt.changeWorld( CENTER, mRadius );
+    mEngagementAtt.changeWorld( CENTER, mRadius );
     
 }
 
@@ -320,15 +324,10 @@ void Character::dance() {
     }
 }
 
-void Character::moveTo(Vec2f _mousePos) {
+void Character::move(Vec3f _position, Quatf _rotation) {
 
-    
-    
-    if(mNumberOfMainPoints > 0) {
-       
-        //mMainPoints[0].moveTo(_mousePos);
-        mMainPoints[0].moveTo(Vec3f(0,0,0), 2000, true);
-    }
+    mCenterPosition = _position;
+    mRotation = _rotation;
      
     
 }
@@ -405,96 +404,64 @@ void Character::draw() {
     //glEnable(GL_DEPTH_TEST);
     //glAlphaFunc(GL_GREATER, 0.5);
     
-    glPushMatrix();
+    gl::pushMatrices();
     
-    //Schütteln
-    if(mForceTimer) {
-        float translateMax = mForceTimer;
-        glTranslatef(Rand::randFloat(-translateMax, translateMax), Rand::randFloat(-translateMax, translateMax), Rand::randFloat(-translateMax, translateMax));
-        mForceTimer--;
-    }
+        gl::translate( mCenterPosition );
+        gl::rotate( mRotation );
+        
     
-    gl::enableAlphaBlending(); 
-    gl::color(0,1,0,0.4);
     
-    gl::drawStrokedCircle(mCenterPos.xy(), mRadius);
-   //gl::drawSphere(mCenterPos, mRadius, 64);
-    gl::disableAlphaBlending();
+        gl::pushMatrices();
     
-    gl::color(1,0,0);
-    
-   
-    
-    //bool jo = false;
-    
-    if(mDrawCharacter) {
-    
-        for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
-            
-            //jo = true;
-            
-            gl::enableAlphaBlending();
-            
-            if(p->mEndOfLine) {
-                gl::color(0.5,0.5,1);
-                //gl::color(1,1,1,1);
-                
-                /*
-                if(ballImage) ballImage.enableAndBind();
-                
-                glEnable(GL_ALPHA_TEST);
-                
-                // draw ball
-                glPushMatrix();
-                glTranslatef(p->getPosition());
-                
-                glBegin(GL_QUADS);
-                glTexCoord2f(0, 0); glVertex2f(-p->mRadius, -p->mRadius);
-                glTexCoord2f(1, 0); glVertex2f(p->mRadius, -p->mRadius);
-                glTexCoord2f(1, 1); glVertex2f(p->mRadius, p->mRadius);
-                glTexCoord2f(0, 1); glVertex2f(-p->mRadius, p->mRadius);
-                glEnd();
-                glPopMatrix();
-                
-                glDisable(GL_ALPHA_TEST);
-                
-                if(ballImage) ballImage.unbind();
-                glPopMatrix();
-                 */
-                p->draw();
+            //Schütteln
+            if(mForceTimer) {
+                float translateMax = mForceTimer;
+                glTranslatef(Rand::randFloat(-translateMax, translateMax), Rand::randFloat(-translateMax, translateMax), Rand::randFloat(-translateMax, translateMax));
+                mForceTimer--;
             }
-            else {
-                gl::color(1,1,0);
-                p->draw();
-            }
-            
-            
-            
+        
+            gl::enableAlphaBlending(); 
+            gl::color(0,1,0,0.4);
+        
+            gl::drawStrokedCircle(CENTER.xy(), mRadius);
+            //gl::drawSphere(CENTER, mRadius, 64);
             gl::disableAlphaBlending();
-            
-            for ( int i = 0; i<p->mNeighbours.size(); i++) {
-                gl::color(1,0.5,0);
-                gl::drawLine(p->getPosition(), p->mNeighbours[i]->getPosition());
-                gl::color(1,1,0);
+            gl::color(1,0,0);
+        
+            if(mDrawCharacter) {
+        
+                for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+                           
+                    if(p->mEndOfLine) {
+                        gl::color(0.5,0.5,1);
+                        p->draw();
+                    }
+                    else {
+                        gl::color(1,1,0);
+                        p->draw();
+                    }
+                
+                    for ( int i = 0; i<p->mNeighbours.size(); i++) {
+                        gl::color(1,0.5,0);
+                        gl::drawLine(p->getPosition(), p->mNeighbours[i]->getPosition());
+                        gl::color(1,1,0);
+                    }
+                
+               
+                }
             }
-            
-           
-        }
-    }
-    
-    //Draw EmoAttractors
-    mFrustrationAtt.render();
-    mEngagementAtt.render();
-    
-    
-    for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
-        p->draw();
-    }
-    
-   
-    
-    
-    glPopMatrix();
-    
+        
+            //Draw EmoAttractors
+            mFrustrationAtt.render();
+            mEngagementAtt.render();
+        
+        
+            for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
+                p->draw();
+            }
+
+        gl::popMatrices();
+
+    gl::popMatrices();
     
 }
