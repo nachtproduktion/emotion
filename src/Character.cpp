@@ -409,7 +409,7 @@ void Character::draw() {
         gl::translate( mCenterPosition );
         gl::rotate( mRotation );
         
-    
+   
     
         gl::pushMatrices();
     
@@ -419,13 +419,12 @@ void Character::draw() {
                 glTranslatef(Rand::randFloat(-translateMax, translateMax), Rand::randFloat(-translateMax, translateMax), Rand::randFloat(-translateMax, translateMax));
                 mForceTimer--;
             }
-        
-            gl::enableAlphaBlending(); 
+    
+         
             gl::color(0,1,0,0.4);
         
             gl::drawStrokedCircle(CENTER.xy(), mRadius);
             //gl::drawSphere(CENTER, mRadius, 64);
-            gl::disableAlphaBlending();
             gl::color(1,0,0);
         
             if(mDrawCharacter) {
@@ -457,9 +456,9 @@ void Character::draw() {
         
         
             for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
-                p->draw();
+                //p->draw();
             }
-
+ 
         gl::popMatrices();
 
     gl::popMatrices();

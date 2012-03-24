@@ -10,6 +10,7 @@
 
 #include "BeatController.h"
 #include "ParticleController.h"
+#include "InfoPanel.h"
 
 #include <list>
 
@@ -24,10 +25,14 @@ class emotionApp : public AppBasic {
     void prepareSettings( Settings *settings );
 	void setup();
     void resize( ResizeEvent event );
-	void update();
+	
+    void update();
     void checkEmotions();
     void updateCharacters();
+    
 	void draw();
+    void drawInfoPanel();
+    
     void keyDown( KeyEvent event );
     void keyUp( KeyEvent event );
     void mouseDown( MouseEvent event );	
@@ -36,6 +41,7 @@ class emotionApp : public AppBasic {
     //Spezial
     char                mKeyDown;
     Vec2i               mMouseDown;
+    InfoPanel           mInfoPanel;
     
     //Character
     Character           mCharacter;
@@ -79,27 +85,7 @@ void emotionApp::setup()
 	mCam.setPerspective( 50.0f, getWindowAspectRatio(), 0.1f, 10000.0f );
     mCam.lookAt( Vec3f( 0, 0, mCameraDistance ), Vec3f::zero() );
     
-    //SPEZIAL
-    mKeyDown = false;
-	
-	// SETUP PARAMS
-	mParams = params::InterfaceGl( "Kamera", Vec2i( 200, 300 ) );
-    mParams.addParam( "Framerate", &fps, "", true);
-    mParams.addSeparator();
-	//mParams.addParam( "Scene Rotation", &mSceneRotation, "opened=1" );
-	mParams.addParam( "Eye Distance", &mCameraDistance, "min=50.0 max=1500.0 step=50.0" ); //keyIncr=s keyDecr=w" );
-    mParams.addSeparator();
-    mParams.addParam( "S-Radius", &mSphereRadius, "min=20 max=500 step=1" );
-    mParams.addParam( "C-Points", &mCPoints, "min=1 max=50 step=1" );
-    mParams.addParam( "F-Amount", &mFAmount, "min=5 max=50 step=1" );
-    mParams.addSeparator();
-    mParams.addParam( "BPM", &mBPM, "min=1 max=200 step=1" );
-    mParams.addSeparator();
-    mParams.addParam( "Frustration", &mFrustration, "min=0 max=100 step=1" );
-    mParams.addParam( "Engagement", &mEngagement, "min=0 max=100 step=1" );
-    mParams.addParam( "Meditation", &mMeditation, "min=0 max=100 step=1" );
-    mParams.addParam( "Excitement", &mExcitement, "min=0 max=100 step=1" );
-
+    
     //CHARACTER
     mCPoints = 5;
     mFAmount = 10;
@@ -119,6 +105,35 @@ void emotionApp::setup()
     
     //Random
     Rand::randomize();
+	
+	// SETUP PARAMS
+	mParams = params::InterfaceGl( "Kamera", Vec2i( 200, 300 ) );
+    mParams.addParam( "Framerate", &fps, "", true);
+    mParams.addSeparator();
+	//mParams.addParam( "Scene Rotation", &mSceneRotation, "opened=1" );
+	mParams.addParam( "Eye Distance", &mCameraDistance, "min=50.0 max=1500.0 step=50.0" ); //keyIncr=s keyDecr=w" );
+    mParams.addSeparator();
+    mParams.addParam( "S-Radius", &mSphereRadius, "min=20 max=500 step=1" );
+    mParams.addParam( "C-Points", &mCPoints, "min=1 max=50 step=1" );
+    mParams.addParam( "F-Amount", &mFAmount, "min=5 max=50 step=1" );
+    mParams.addSeparator();
+    mParams.addParam( "BPM", &mBPM, "min=1 max=200 step=1" );
+    mParams.addSeparator();
+    mParams.addParam( "Frustration", &mFrustration, "min=0 max=100 step=1" );
+    mParams.addParam( "Engagement", &mEngagement, "min=0 max=100 step=1" );
+    mParams.addParam( "Meditation", &mMeditation, "min=0 max=100 step=1" );
+    mParams.addParam( "Excitement", &mExcitement, "min=0 max=100 step=1" );
+    
+    //SPEZIAL
+    mKeyDown = false;
+    mInfoPanel.createTexture( Vec2i( 20, 350 ) );
+    
+    glDisable( GL_TEXTURE_2D );
+	
+	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
+	gl::enableDepthWrite();
+	gl::enableDepthRead();
+	gl::enableAlphaBlending();
     
 }
 
@@ -170,28 +185,45 @@ void emotionApp::checkEmotions() {
 void emotionApp::draw()
 {
     
-    //Kamera
+    // clear out the window with black
+    gl::clear( Color( 0.0f, 0.1f, 0.2f ) );
+    
+    // Kamera
     gl::setMatrices( mCam );
     
-	// clear out the window with black
-	gl::enableDepthWrite();
+    gl::enableDepthWrite();
 	gl::enableDepthRead();
+    gl::enableAlphaBlending(); 
+    
+    mCharacter.draw();
+    
+    
+    /*
+
 	
 	gl::clear( Color( 0.0f, 0.1f, 0.2f ) );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     
     //Render Rücken von Objekten?!
 	glDisable( GL_CULL_FACE );
+    */
     
-	
-    
-    mCharacter.draw();
-    
-    //mParticleController.draw();
-    
-    
-    // DRAW PARAMS WINDOW
+  
+    // DRAW PARAMS WINDOW + INFO PANEL
 	params::InterfaceGl::draw();
+    drawInfoPanel();
+}
+
+void emotionApp::drawInfoPanel() {
+
+    
+    gl::enableDepthWrite( false );
+	gl::setMatricesWindow( getWindowSize() );
+    
+	glEnable( GL_TEXTURE_2D );
+	mInfoPanel.update();
+	glDisable( GL_TEXTURE_2D );
+
 }
 
 
@@ -213,6 +245,11 @@ void emotionApp::keyDown( KeyEvent event )
         case ' ': mBeatController.bang(); break;
         case 'q': 
         case 'w': mKeyDown = event.getChar(); break;
+        case 'r': //RESET VIEW
+            mArcball.resetQuat();
+            mCharPosition = ci::Vec3f::zero();
+        break;
+        case 'i': mInfoPanel.toggleState(); break;
     }
 
 }

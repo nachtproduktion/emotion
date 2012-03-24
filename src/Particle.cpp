@@ -71,8 +71,6 @@ void Particle::update()
 
 void Particle::render()
 {
-    gl::enableAlphaBlending();
 	gl::color( mColor );
 	gl::drawSphere( mPosition, mRadius );
-    gl::disableAlphaBlending();
 }
