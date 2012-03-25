@@ -248,6 +248,7 @@ void emotionApp::keyDown( KeyEvent event )
         case '2': mCharacter.wince(); break;
         case '3': mCharacter.jump(); break;
         case '4': mCharacter.center(); break;
+        case '5': mCharacter.sphere(); break;
         case 'd': mCharacter.mDrawCharacter = !mCharacter.mDrawCharacter; break;
     }
 

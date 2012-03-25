@@ -350,6 +350,10 @@ void Character::center() {
     mMovement.moveToCenter();
 }
 
+void Character::sphere() {
+    mMovement.moveOnSphere();
+}
+
 
 void Character::move(Vec3f _position, Quatf _rotation) {
 

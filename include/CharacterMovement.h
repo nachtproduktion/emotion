@@ -23,7 +23,7 @@ class CharacterMovement {
     
     void        wince( int _amount = 50, bool _soft = true );
     void        jump( time_t _ms, int _amount = 50 );
-    void        moveOnSphere( ci::Vec3f _target, ci::Vec3f _parent, time_t _ms = 0 );
+    void        moveOnSphere( float _angle = 90, time_t _ms = 0 );
     void        moveToCenter( time_t _ms = 0 );
     void        setBack( time_t _ms = 0 );
     

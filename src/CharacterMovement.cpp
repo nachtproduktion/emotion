@@ -84,18 +84,40 @@ void CharacterMovement::jump( time_t _ms, int _amount ) {
     mActive[JUMP] = true;
 }
 
-void CharacterMovement::moveOnSphere( Vec3f _target, Vec3f _parent, time_t _ms ) {
-/*
+void CharacterMovement::moveOnSphere( float _angle, time_t _ms ) {
+
     mStartTimes[SPHERE] = niko::getTimeMS();
         
     //Set Target Time
     if( _ms == 0 ) { mTargetTimes[SPHERE] = mStartTimes[SPHERE] + 500; }
     else { mTargetTimes[SPHERE] = _ms; }
     
-    //Set Target Position
-    mTargetPositions[SPHERE] = _target;
-    mParentSphere            = _parent;
-  */  
+    float angleInRadiansX = ci::toRadians( Rand::randFloat(_angle) );
+    float angleInRadiansY = ci::toRadians( Rand::randFloat(_angle) );
+    float angleInRadiansZ = ci::toRadians( Rand::randFloat(_angle) );
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
+        if( p->getEndOfLine() ) {
+            
+            if( p->getNeighboursSize() != 1 ) { return; }
+                         
+            //zufall ziel
+            p->savePosition = p->getPosition();
+            
+            Vec3f target = p->savePosition - p->mNeighbours[0]->getPosition();
+            target.normalize();
+            target.rotateX(angleInRadiansX);
+            target.rotateY(angleInRadiansY);
+            target.rotateZ(angleInRadiansZ);
+            
+            target *= mpBonds->at(p->getBondID(0)).getBondLength();
+            target += p->mNeighbours[0]->getPosition();
+            
+            //Save Position & Target
+            p->saveTarget = target;    
+        }   
+    }
+    
     //Start Moving
     mActive[SPHERE] = true;
 }
@@ -169,7 +191,7 @@ void CharacterMovement::update() {
     }
     
     if( mActive[SPHERE] ) { 
-       // mCurrentPosition = _moveOnSphere();
+       _moveOnSphere();
     }
 
 }
@@ -238,36 +260,51 @@ void CharacterMovement::_jump() {
 }
 
 void CharacterMovement::_moveOnSphere() {
-    /*
+   
     // SLERP
     // position t von 0 - 1;
     // a.slerp( t, b )
-    
+       
     time_t timeDelta = mTargetTimes[SPHERE] - niko::getTimeMS();
-    cout << "fertig: " << timeDelta << endl;
+    
     if ( timeDelta <= 0 ) { 
         
+        for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
+            if( p->getEndOfLine() ) {
+                p->moveTo( p->saveTarget );
+            }
+        }
+        
         mActive[SPHERE] = false;
-        return mTargetPositions[SPHERE] + mParentSphere;
+        return;
     }
     
-    float t = niko::mapping( timeDelta, 0, mTargetTimes[SPHERE] - mStartTimes[SPHERE], 1, 0, true);
-        
-    Vec3f mVecA = mCurrentPosition - mParentSphere;
-    Vec3f mVecB = mTargetPositions[SPHERE];
     
-    float length = mVecA.length();
     
-    mVecA.normalize();
-    mVecB.normalize();
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
+        if( p->getEndOfLine() ) {
+            
+            if( p->getNeighboursSize() != 1 ) { continue; }
 
-    ci::Vec3f newPosition = mVecA.slerp( t, mVecB );
-    
-    newPosition *= length;
-    newPosition += mParentSphere;
-    
-    return newPosition;
-  */
+            float t = niko::mapping( timeDelta, 0, mTargetTimes[SPHERE] - mStartTimes[SPHERE], 1, 0, true);
+            t = ci::easeInOutQuad( t ); 
+            
+            
+            Vec3f mVecA = p->savePosition - p->mNeighbours[0]->getPosition();
+            Vec3f mVecB = p->saveTarget - p->mNeighbours[0]->getPosition();;
+            
+            mVecA.normalize();
+            mVecB.normalize();
+            
+            ci::Vec3f newPosition = mVecA.slerp( t, mVecB );
+            
+            newPosition *= mpBonds->at(p->getBondID(0)).getBondLength();
+            newPosition += p->mNeighbours[0]->getPosition();
+            
+            p->moveTo( newPosition );
+            
+        }   
+    }    
 }
 
 void CharacterMovement::_moveToCenter() {
