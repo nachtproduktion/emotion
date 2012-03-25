@@ -45,6 +45,9 @@ namespace niko {
         
         return msec;
     }
+    
+    template<typename T, int size>
+    inline int getArrLength(T(&)[size]){ return size; }
 
 }
 

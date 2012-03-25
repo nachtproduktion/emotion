@@ -1,4 +1,6 @@
-#pragma once
+#ifndef emotion_Character_h
+#define emotion_Character_h
+
 #include "cinder/app/AppBasic.h"
 #include "cinder/Channel.h"
 #include "cinder/Vector.h"
@@ -21,6 +23,9 @@
 #include "niko_functionen.h"
 #include "ParticleController.h"
 #include "EmoAttractor.h"
+#include "CharacterStructs.h"
+#include "CharacterPoint.h"
+#include "CharacterMovement.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -40,264 +45,6 @@ using namespace MSA;
 
 extern int fps;
 
-
-struct MainPoint {
-	MainPoint() {}
-	MainPoint( Vec3f _pos, MSA::Physics::World3D * _physics, int _pID ) {
-        
-        mParticleID = _pID;
-        mPhysic = _physics;
-        
-        mMass	= 4.0f;
-		mBounce	= 0.2f;
-		mRadius	= 5.0f;
-        
-        mEndOfLine     = true;
-        
-        mTarget        = _pos;
-        mTargetTime    = 0;
-        mMoveBack      = false;
-        mActive        = false;
-        
-        mParticleControllerID = -1;
-                
-        Physics::Particle3D* p = mPhysic->makeParticle(_pos);        
-        p->setMass(mMass)->setBounce(mBounce)->setRadius(mRadius)->enableCollision()->makeFree();
-    }
-    
-    void setNeighbours( MainPoint* _neighbour ) {
-        mNeighbours.push_back( _neighbour );
-                
-        Physics::Particle3D *a = getParticle();
-		Physics::Particle3D *b = _neighbour->getParticle();
-        mPhysic->makeSpring(a, b, SPRING_STRENGTH, a->getPosition().distance(b->getPosition()));
-
-    }
-    
-    void setParticleControllerID( int _id ) {
-        mParticleControllerID = _id;
-    }
-    
-    int getParticleControllerID() {
-        return mParticleControllerID;
-    }
-    
-    void setRadius( float _r ) {
-        mRadius      = _r;
-        Physics::Particle3D *p = getParticle();
-        p->setRadius( mRadius );
-        
-    }
-    
-    void setMass( float _m ) {
-        mMass      = _m;
-        Physics::Particle3D *p = getParticle();
-        p->setMass( mMass );
-        
-    }
-    
-    void setFixed() {
-        Physics::Particle3D *p = getParticle();
-        p->makeFixed();
-    } 
-    
-    bool getFixed() {
-        Physics::Particle3D *p = getParticle();
-        return p->isFixed();
-    } 
-    
-    void setFree() {
-        Physics::Particle3D *p = getParticle();
-        p->makeFree();
-    } 
-    
-    void postSettings() {
-        if( mNeighbours.size() == 0 ) { mEndOfLine = true; }
-        else if( mNeighbours.size() == 1 && mParticleID == 0 ) { 
-            mEndOfLine = true; 
-            setMass(4.0f);
-            
-        }
-        else { 
-            mEndOfLine = false; 
-            if(getFixed()) {
-                setMass(150.0f);
-                setRadius(10.0f);
-                setFree();
-            }
-            else { 
-                setMass(10.0f);
-                setRadius(7.0f);
-            }
-            
-            
-        }
-        
-    }
-    
-    Vec3f getPosition() {
-        Physics::Particle3D* p = getParticle();
-        return p->getPosition();
-    }
-    
-    Physics::Particle3D* getParticle() {
-        Physics::Particle3D* p = mPhysic->getParticle(mParticleID);
-        return p;
-    }
-    
-    void moveTo( Vec2f _target ) { 
-        float z = getPosition().z;
-        moveTo( Vec3f( _target.x, _target.y, z ) );
-    };
-    
-    //Bewegungsberechnung
-    void moveTo( Vec3f _target ) { 
-        mActive = true;
-        mTarget = _target;
-        mTargetTime = 0;
-    };
-
-    void moveTo( Vec3f _target, time_t _ms, bool _back = false) { 
-        
-        mActive = true;
-        mMoveBack = false;
-        
-        if( _back ) {
-            mMoveBack = true;
-            mOldPosition = mTarget;
-        }
-        
-        mTarget = _target;
-        
-        mTargetTime = _ms;
-        mSetTime    = niko::getTimeMS();
-    };
-    
-    //Direkt zum Punkt
-    void forceTo( Vec3f _target ) { 
-        Physics::Particle3D* p = getParticle();
-        mTarget = _target;
-        p->moveTo(_target);
-        
-        mActive = false;
-        
-    };
-    
-    void moveBy( Vec3f _dir ) {
-        Physics::Particle3D* p = getParticle();
-        p->moveBy( _dir ); 
-    }
-    
-    bool getActive() { return mActive; }
-    
-    void update() {
-    
-        //cout << "update: " << mTarget << endl;
-        
-        if( !mActive ) {
-            return;
-        } 
-        
-        
-        Physics::Particle3D* p = getParticle();
-        Vec3f pPosition = p->getPosition();
-        
-        if( mTargetTime == 0) {
-            if( mTarget.distance(pPosition) < 1 ) {
-                forceTo(mTarget);
-            }
-            else {
-                Vec3f newPosition = pPosition;
-                newPosition += (mTarget - pPosition) * 0.20;
-                p->moveTo(newPosition);
-            }
-        } else {
-            
-            time_t timeDelta = mTargetTime - niko::getTimeMS();
-            
-            if( timeDelta <= 0 ) { 
-                
-                forceTo(mTarget);
-                mTargetTime = 0;
-                
-                if(mMoveBack) {
-                    mMoveBack = false;
-                    moveTo(mOldPosition);
-                }
-                
-            }
-            else {
-                
-                float t = niko::mapping( timeDelta, 0, mTargetTime - mSetTime, 0, 1, true);
-               // float distLength = 1 - ci::easeInQuad( t ); 
-                //float distLength = 1 - ci::easeInSine( t );
-                float distLength = 1 - ci::easeNone( t );
-                
-                
-                Vec3f newPosition = pPosition;
-                newPosition += (mTarget - pPosition) * distLength;
-                
-                //EaseInExpo();
-                
-                
-                //float time = math<float>::clamp( fmod( getElapsedSeconds() * TWEEN_SPEED, 1 ) * 1.5f, 0, 1 );
-                 /*
-
-                //Get Frames pro MS
-                float fpms = fps / 1000;
-                
-                //check Frame in timeDelta
-                float fptd = fpms * timeDelta;
-                
-                //check strecke pro Frame
-                Vec3f newPosition = pPosition;
-                newPosition += (mTarget - pPosition) / fptd;
-                
-                 */
-                //set new Pos
-                p->moveTo(newPosition);
-            }
-        }
-    }
-    
-    void draw() { 
-        Physics::Particle3D* p = getParticle();
-        gl::drawSphere (p->getPosition(), mRadius);
-        
-        /* DEBUG
-        if(mEndOfLine) {
-        gl::drawString( toString(mParticleID), Vec2f(p->getPosition().x, p->getPosition().y), ColorA(1,1,1,1));
-        }
- 
-        if(!mActive) {
-            gl::color(255, 0, 0);
-            gl::drawSphere(Vec3f(0,0,0), 500);
-        }
-         */
-        
-    }
-      
-    float   mRadius, mMass, mBounce;
-    bool    mEndOfLine;
-    Vec3f   mTarget, mOldPosition;
-    time_t  mTargetTime;  // in ms
-    time_t  mSetTime;
-    bool    mMoveBack;
-    bool    mActive;
-    int     mParticleControllerID;
-    
-    
-    std::vector<  MainPoint* > mNeighbours;
-    
-    //Physic
-    int mParticleID;
-    Physics::World3D* mPhysic;
-
-    //std::map< MainPoint*, float > mNeighbours;
-
-};
-
-
 class Character {
  public:
 	Character();
@@ -305,7 +52,7 @@ class Character {
     
     void draw();
     void update();
-    void mkPoint(MainPoint *lastPoint, bool firstPoint = false);
+    void mkPoint(CharacterPoint *lastPoint, bool firstPoint = false);
     void createNewStructure( int _num );
     void createPhysics();
     void createParticleController(); 
@@ -317,6 +64,7 @@ class Character {
     void addRandomForce( float _f );
     void move(Vec3f _position, Quatf _rotation);
     void dance();
+    void wince( int _amount = 50 );
     //RENAME
     void test();
     void setNextBeat( time_t _bang );
@@ -324,18 +72,17 @@ class Character {
     bool        mDrawCharacter;
     
     float       mRadius;
-    int         mNumberOfMainPoints;
-    int         mMainPointsLeft;
+    int         mNumberOfCharacterPoints;
+    int         mCharacterPointsLeft;
     bool        mOpenLines;
     time_t      mNextBeat;
+
+    std::vector<CharacterPoint> mCharacterPoints;
+    CharacterMovement           mMovement;
     
     //VIEWING
     ci::Vec3f   mCenterPosition;
     Quatf       mRotation;
-    
-    
-    std::vector<MainPoint>  mMainPoints;
-    Perlin      mPerlin;
     
     //Particle
     std::vector<ParticleController>  mParticleController;
@@ -343,7 +90,7 @@ class Character {
     //Physics
     Physics::World3D        mPhysics;
     int                     mForceTimer;
-    //Physics::Particle3D*    mAttractors[8];
+    std::vector<Bond>       mBonds;
     
     //EmoAttractos
     EmoAttractor            mFrustrationAtt;
@@ -354,3 +101,5 @@ class Character {
     gl::Texture         ballImage;
     
 };
+
+#endif

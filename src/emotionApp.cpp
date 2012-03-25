@@ -51,6 +51,8 @@ class emotionApp : public AppBasic {
     BeatController      mBeatController;
     int                 mBPM;
     
+    bool                mToggleDance;
+    
 	// PARAMS
 	params::InterfaceGl	mParams;
     
@@ -87,21 +89,24 @@ void emotionApp::setup()
     
     
     //CHARACTER
-    mCPoints = 5;
-    mFAmount = 10;
-    mSphereRadius = 100.0f;
+    mCPoints            = 5;
+    mFAmount            = 10;
+    mSphereRadius       = 100.0f;
     
-    mCharPosition = ci::Vec3f::zero();
-    mLastCharPosition = ci::Vec3f::zero();
+    mCharPosition       = ci::Vec3f::zero();
+    mLastCharPosition   = ci::Vec3f::zero();
+    
+    mToggleDance        = false;
+    
     
     //BeatController
-    mBPM    = 90;
+    mBPM                = 90;
     
     //Emotion
-    mFrustration = 0;
-    mEngagement = 0;
-    mMeditation = 0;
-    mExcitement = 0;
+    mFrustration        = 0;
+    mEngagement         = 0;
+    mMeditation         = 0;
+    mExcitement         = 0;
     
     //Random
     Rand::randomize();
@@ -144,8 +149,7 @@ void emotionApp::resize( ResizeEvent event )
 	mArcball.setRadius( 150 );
     
     mCam.setPerspective( 50.0f, getWindowAspectRatio(), 0.1f, 10000.0f );
-	gl::setMatrices( mCam );	
-    
+	gl::setMatrices( mCam );	    
 }
 
 void emotionApp::update()
@@ -155,23 +159,23 @@ void emotionApp::update()
     // UPDATE CAMERA
 	mCam.lookAt( Vec3f( 0, 0, mCameraDistance ), Vec3f::zero() );
     
-    
-    //mSceneRotation *= Quatf(0,0.01f,0.0f);
-    //mParticleController.update();
-    
-    //Emotion UPDATe
+    // EMOTION UPDATE
     checkEmotions();
     updateCharacters();
-    ///////////
-
+    
+    // BEAT CONTROLLER
     if( ci::app::getElapsedFrames() > 10 ) 
         mBeatController.update();
    
 }
 
 void emotionApp::updateCharacters() {
+    
     mCharacter.setRadius(mSphereRadius);
     mCharacter.move(mCharPosition, mArcball.getQuat());
+
+    if( mToggleDance ) { mCharacter.dance(); }
+    
     mCharacter.update();
 
 }
@@ -188,26 +192,17 @@ void emotionApp::draw()
     // clear out the window with black
     gl::clear( Color( 0.0f, 0.1f, 0.2f ) );
     
-    // Kamera
+    // KAMERA
     gl::setMatrices( mCam );
     
     gl::enableDepthWrite();
 	gl::enableDepthRead();
     gl::enableAlphaBlending(); 
     
+    
+    // CHARACTER
     mCharacter.draw();
-    
-    
-    /*
 
-	
-	gl::clear( Color( 0.0f, 0.1f, 0.2f ) );
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    
-    //Render Rücken von Objekten?!
-	glDisable( GL_CULL_FACE );
-    */
-    
   
     // DRAW PARAMS WINDOW + INFO PANEL
 	params::InterfaceGl::draw();
@@ -216,7 +211,6 @@ void emotionApp::draw()
 
 void emotionApp::drawInfoPanel() {
 
-    
     gl::enableDepthWrite( false );
 	gl::setMatricesWindow( getWindowSize() );
     
@@ -250,6 +244,9 @@ void emotionApp::keyDown( KeyEvent event )
             mCharPosition = ci::Vec3f::zero();
         break;
         case 'i': mInfoPanel.toggleState(); break;
+        case '1': mToggleDance = !mToggleDance; break;
+        case '2': mCharacter.wince(); break;
+        case 'd': mCharacter.mDrawCharacter = !mCharacter.mDrawCharacter; break;
     }
 
 }

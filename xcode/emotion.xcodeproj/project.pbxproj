@@ -22,6 +22,8 @@
 		23A75424150FBE2200666518 /* MSACoreGL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753C1150FBE2200666518 /* MSACoreGL.cpp */; };
 		23A7542A150FBE2200666518 /* MSAObjCPointer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753D2150FBE2200666518 /* MSAObjCPointer.cpp */; };
 		23D325C8151D3DEE00563D81 /* InfoPanel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23D325C7151D3DEE00563D81 /* InfoPanel.cpp */; };
+		23D325CF151E09B300563D81 /* CharacterPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23D325CD151E09B200563D81 /* CharacterPoint.cpp */; };
+		23D325D0151E09B300563D81 /* CharacterMovement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23D325CE151E09B200563D81 /* CharacterMovement.cpp */; };
 		23EB8A8115191D7A00CC3D2D /* ParticleController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */; };
 		23F904B2150BE0370040F1A3 /* Particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F904B1150BE0370040F1A3 /* Particle.cpp */; };
 		23F904BB150BFA460040F1A3 /* Character.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F904BA150BFA460040F1A3 /* Character.cpp */; };
@@ -78,6 +80,11 @@
 		23CE9750150C147D00E0A515 /* niko_functionen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = niko_functionen.h; path = ../include/niko_functionen.h; sourceTree = "<group>"; };
 		23D325C5151D3DE600563D81 /* InfoPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InfoPanel.h; path = ../include/InfoPanel.h; sourceTree = "<group>"; };
 		23D325C7151D3DEE00563D81 /* InfoPanel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InfoPanel.cpp; path = ../src/InfoPanel.cpp; sourceTree = "<group>"; };
+		23D325CD151E09B200563D81 /* CharacterPoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CharacterPoint.cpp; path = ../src/CharacterPoint.cpp; sourceTree = "<group>"; };
+		23D325CE151E09B200563D81 /* CharacterMovement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CharacterMovement.cpp; path = ../src/CharacterMovement.cpp; sourceTree = "<group>"; };
+		23D325D1151E09BB00563D81 /* CharacterPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CharacterPoint.h; path = ../include/CharacterPoint.h; sourceTree = "<group>"; };
+		23D325D2151E09BB00563D81 /* CharacterMovement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CharacterMovement.h; path = ../include/CharacterMovement.h; sourceTree = "<group>"; };
+		23D325F2151EA8C100563D81 /* CharacterStructs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CharacterStructs.h; path = ../include/CharacterStructs.h; sourceTree = "<group>"; };
 		23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParticleController.cpp; path = ../src/ParticleController.cpp; sourceTree = "<group>"; };
 		23EB8A8315191D8100CC3D2D /* ParticleController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParticleController.h; path = ../include/ParticleController.h; sourceTree = "<group>"; };
 		23F904AF150BE0330040F1A3 /* Particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Particle.h; path = ../include/Particle.h; sourceTree = "<group>"; };
@@ -124,6 +131,8 @@
 				23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */,
 				238F2B741514B49500673859 /* BeatController.cpp */,
 				23F904BA150BFA460040F1A3 /* Character.cpp */,
+				23D325CD151E09B200563D81 /* CharacterPoint.cpp */,
+				23D325CE151E09B200563D81 /* CharacterMovement.cpp */,
 				23F904B1150BE0370040F1A3 /* Particle.cpp */,
 			);
 			name = Source;
@@ -280,6 +289,9 @@
 				23CE9750150C147D00E0A515 /* niko_functionen.h */,
 				23EB8A8315191D8100CC3D2D /* ParticleController.h */,
 				23F904BC150BFA4E0040F1A3 /* Character.h */,
+				23D325F2151EA8C100563D81 /* CharacterStructs.h */,
+				23D325D1151E09BB00563D81 /* CharacterPoint.h */,
+				23D325D2151E09BB00563D81 /* CharacterMovement.h */,
 				23F904AF150BE0330040F1A3 /* Particle.h */,
 				238F2B771514B49B00673859 /* BeatController.h */,
 			);
@@ -374,6 +386,8 @@
 				23EB8A8115191D7A00CC3D2D /* ParticleController.cpp in Sources */,
 				2371E4F2151ABDE3009745BD /* EmoAttractor.cpp in Sources */,
 				23D325C8151D3DEE00563D81 /* InfoPanel.cpp in Sources */,
+				23D325CF151E09B300563D81 /* CharacterPoint.cpp in Sources */,
+				23D325D0151E09B300563D81 /* CharacterMovement.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

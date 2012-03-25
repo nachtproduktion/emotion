@@ -31,6 +31,7 @@ void InfoPanel::createTexture( ci::Vec2f _position )
 	layout.setColor( Color( 0.5f, 0.2f, 0.0f ) );
 	layout.addLine( "'M' neuer Charakter" );
 	layout.addLine( "'F' Charakter schütteln" );
+    layout.addLine( "'D' Charakter Ein/Ausblenden" );
 	layout.addLine( "'B' BPM aktualisieren" );
 	layout.addLine( "' ' Beat Schlag" );
 	layout.addLine( "'I' Info Ein/Ausblenden" );

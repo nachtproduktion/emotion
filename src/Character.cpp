@@ -17,7 +17,7 @@ Character::Character()
     mRadius = 100.0f;
     
     mForceTimer = false;
-    mNumberOfMainPoints = 0;
+    mNumberOfCharacterPoints = 0;
     mNextBeat = niko::getTimeMS();
     
     mDrawCharacter = true;
@@ -32,26 +32,26 @@ Character::Character( ci::Vec3f _pos, float _radius, Quatf _rotation )
     mRadius = _radius;
     
     mForceTimer = false;
-    mNumberOfMainPoints = 0;
+    mNumberOfCharacterPoints = 0;
     mNextBeat = niko::getTimeMS();
     
     mDrawCharacter = true;
 
 }
 
-void Character::mkPoint(MainPoint *lastPoint, bool firstPoint) {
+void Character::mkPoint(CharacterPoint *lastPoint, bool firstPoint) {
     
     int newPoints = getRandPointNumber();
 
-    if( newPoints > mMainPointsLeft) { newPoints = mMainPointsLeft; }
+    if( newPoints > mCharacterPointsLeft) { newPoints = mCharacterPointsLeft; }
     
-    if(firstPoint && mMainPointsLeft > 1) {
+    if(firstPoint && mCharacterPointsLeft > 1) {
         //Dafür sorgen das Startpunkt immer 2 Nachbarn hat!
         if( newPoints < 2 ) {
             newPoints = 2;
         }
-        mMainPointsLeft--;
-        mNumberOfMainPoints--;
+        mCharacterPointsLeft--;
+        mNumberOfCharacterPoints--;
     }
     
     //cout << newPoints << endl;   //DEBUG
@@ -60,12 +60,12 @@ void Character::mkPoint(MainPoint *lastPoint, bool firstPoint) {
     for(int i = 0; i<newPoints; i++) {
         
         if( i == 1 && firstPoint ) { 
-            mMainPointsLeft++; 
-            mNumberOfMainPoints++;
+            mCharacterPointsLeft++; 
+            mNumberOfCharacterPoints++;
         }
         
         //Wenn alle Punkte aufgebraucht sind
-        if( mMainPointsLeft <= 0 ) { return; }
+        if( mCharacterPointsLeft <= 0 ) { return; }
         
         if( newPoints > i+1 && newPoints > 1) { mOpenLines = true; }
         
@@ -78,13 +78,22 @@ void Character::mkPoint(MainPoint *lastPoint, bool firstPoint) {
         //randVec *= Rand::randFloat(mRadius);
         //randVec += mCenterPos;
         
-        mMainPoints.push_back( MainPoint( randVec, &mPhysics, mNumberOfMainPoints - mMainPointsLeft ) );
-        mMainPointsLeft--;
+        mCharacterPoints.push_back( CharacterPoint( randVec, &mPhysics, mNumberOfCharacterPoints - mCharacterPointsLeft ) );
+        mCharacterPointsLeft--;
         
-        //lastPoint->mNeighbours.push_back( &mMainPoints.back() );
-        lastPoint->setNeighbours( &mMainPoints.back() );
+        //set neighbours
+        mCharacterPoints.back().setNeighbours( lastPoint );
+        lastPoint->setNeighbours( &mCharacterPoints.back() );
         
-        mkPoint( &mMainPoints.back() );
+        //set bonds
+        mBonds.push_back( Bond( lastPoint , &mCharacterPoints.back() ) );
+        mBonds.back().makeBond( &mPhysics );
+        
+        mCharacterPoints.back().setBondID( mBonds.size()-1 );
+        lastPoint->setBondID( mBonds.size()-1 );
+        
+        
+        mkPoint( &mCharacterPoints.back() );
     }
     
     mOpenLines = false;
@@ -125,36 +134,38 @@ void Character::createNewStructure(int _num) {
     
     
     ballImage = gl::Texture( loadImage( loadResource( "kopf.png" ) ) );
-    
-    mPerlin = Perlin();
-    
+        
     mParticleController.clear();
+    mBonds.clear();
     
     //Physics
     createPhysics();
     mPhysics.clear();
     
-    mMainPoints.clear();
+    mCharacterPoints.clear();
     
-    mNumberOfMainPoints = mMainPointsLeft = _num;
-    mMainPoints.reserve( _num );    
+    mNumberOfCharacterPoints = mCharacterPointsLeft = _num;
+    mCharacterPoints.reserve( _num );    
     
     //First Point
-    mMainPoints.push_back( MainPoint( CENTER, &mPhysics, mNumberOfMainPoints - mMainPointsLeft ) );
-    mMainPointsLeft--;
+    mCharacterPoints.push_back( CharacterPoint( CENTER, &mPhysics, mNumberOfCharacterPoints - mCharacterPointsLeft ) );
+    mCharacterPointsLeft--;
     
-    mMainPoints.back().setFixed();
-    mMainPoints.back().setMass(40.0f);
+    mCharacterPoints.back().setFixed();
+    mCharacterPoints.back().setMass(40.0f);
     
     mOpenLines = false;
-    mkPoint(&mMainPoints.back(), true);
+    mkPoint(&mCharacterPoints.back(), true);
 
-    //cout << "erstellt:" << mMainPointsLeft << endl;    //debug
+    //cout << "erstellt:" << mCharacterPointsLeft << endl;    //debug
     
     // POST SETTINGS
-    for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
         p->postSettings();
     }
+    
+    //Create Charactermovement
+    mMovement.setup( &mCharacterPoints, &mBonds );
     
     //Create EmoAttractors
     mFrustrationAtt.create(&mPhysics, mRadius, CENTER);
@@ -171,8 +182,8 @@ void Character::createParticleController() {
     
     int counter = 0;
     
-    for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
-        if( p->mEndOfLine ) {
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){  
+        if( p->getEndOfLine() ) {
             
             mParticleController.push_back( ParticleController( ) );
             p->setParticleControllerID( counter );
@@ -184,16 +195,9 @@ void Character::createParticleController() {
 
 void Character::createPhysics() {
     
-    //	physics.verbose = true;			// dump activity to log
+    //physics.verbose = true;			// dump activity to log
     mPhysics.setGravity(Vec3f(0, GRAVITY, 0));
-    
-    // set world dimensions, not essential, but speeds up collision
-    //int width = ci::app::getWindowWidth();
-    //int height = ci::app::getWindowHeight();
-   // mPhysics.setWorldSize(Vec3f(-width/2, -height, -width/2), Vec3f(width/2, height, width/2));
-    //mPhysics.setWorldSize(Vec3f(-mRadius, -mRadius, -mRadius), Vec3f(mRadius, mRadius, mRadius));
     mPhysics.setWorldSphere(CENTER, mRadius);
-    
     mPhysics.setSectorCount(SECTOR_COUNT);
     
     //Schwerfälligkeit
@@ -285,14 +289,19 @@ void Character::setRadius( float _r ) {
 }
 
 void Character::scale( float _s ) {
-    
-    for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+     
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
         
         Vec3f pointVec = p->getPosition();
         pointVec *= _s;
-        p->forceTo(pointVec);
+        p->moveTo(pointVec);
 
 	}
+    
+    for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){
+        p->setBondLength( p->getBondLength() * _s );
+        p->mSaveDistance *= _s;    
+    } 
     
     mFrustrationAtt.changeWorld( CENTER, mRadius );
     mEngagementAtt.changeWorld( CENTER, mRadius );
@@ -307,21 +316,25 @@ void Character::setNextBeat( time_t _bang ) {
 
 void Character::dance() {
     
-    Vec3f randVec = Rand::randVec3f() * Rand::randFloat(55);
-    
-    for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
         if( !p->getActive() ) {
-            if( p->mEndOfLine ) {
+            if( p->getEndOfLine() ) {
                 
-                randVec *= -1;
+                Vec3f neighboursPos = p->mNeighbours[0]->getPosition();
+                Vec3f particlePos = p->getPosition();
+                float dist = particlePos.distance(neighboursPos);
                 
+                Vec3f randVec = (neighboursPos + Rand::randVec3f()) * dist;
                 
-                Vec3f tmp = randVec + p->getPosition();
-                p->moveTo(tmp, mNextBeat, false);
+                //p->moveTo(randVec, mNextBeat, false);
                 
             }
         }
     }
+}
+
+void Character::wince( int _amount ) {
+    mMovement.wince( _amount );
 }
 
 void Character::move(Vec3f _position, Quatf _rotation) {
@@ -333,14 +346,13 @@ void Character::move(Vec3f _position, Quatf _rotation) {
 }
 
 void Character::update() {
-    
-    //Tanz funktion
-    dance();
+        
+    //Movement Update
+    mMovement.update();
     
     //Mainpoint update
-    for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
-        p->update();
-        
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
+       
         int pcID = p->getParticleControllerID();
         if(pcID > -1) {
             mParticleController[pcID].setTarget(p->getPosition());
@@ -361,11 +373,35 @@ void Character::update() {
 //RENAME
 void Character::test() {
     
+    static int count = 0;
+    
+    
+    if(count == 0) {
+        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+            p->turnOff();
+        }   
+        count = 1;
+    }
+    else {
+        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+            p->turnOn();
+        }   
+        count = 0;
+    }
+    
     
     //alles nach außen
     
-    mDrawCharacter = !mDrawCharacter;
-
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
+        if( p->getEndOfLine() ) {
+           
+            ci::Vec3f randVec = Rand::randVec3f();
+            randVec *= mBonds[p->getBondID()].getBondLength();
+            
+            //p->moveOnSphere( randVec );
+            //p->moveBy(direction);
+        }
+    }
     
     
     //dance();
@@ -401,9 +437,6 @@ void Character::test() {
 
 void Character::draw() {
 
-    //glEnable(GL_DEPTH_TEST);
-    //glAlphaFunc(GL_GREATER, 0.5);
-    
     gl::pushMatrices();
     
         gl::translate( mCenterPosition );
@@ -422,34 +455,33 @@ void Character::draw() {
     
          
             gl::color(0,1,0,0.4);
-        
+            gl::enableWireframe();
             gl::drawStrokedCircle(CENTER.xy(), mRadius);
             //gl::drawSphere(CENTER, mRadius, 64);
+            gl::disableWireframe();
+            
             gl::color(1,0,0);
         
             if(mDrawCharacter) {
         
-                for(  std::vector<MainPoint>::iterator p = mMainPoints.begin(); p != mMainPoints.end(); ++p ){ 
+                for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
                            
-                    if(p->mEndOfLine) {
+                    if(p->getEndOfLine()) {
                         gl::color(0.5,0.5,1);
-                        p->draw();
+                        p->render();
                     }
                     else {
                         gl::color(1,1,0);
-                        p->draw();
+                        p->render();
                     }
-                
-                    for ( int i = 0; i<p->mNeighbours.size(); i++) {
-                        gl::color(1,0.5,0);
-                        gl::drawLine(p->getPosition(), p->mNeighbours[i]->getPosition());
-                        gl::color(1,1,0);
-                    }
-                
-               
                 }
             }
-        
+    
+            //Draw Bonds
+            for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){
+                p->render();
+            }       
+    
             //Draw EmoAttractors
             mFrustrationAtt.render();
             mEngagementAtt.render();
@@ -464,3 +496,4 @@ void Character::draw() {
     gl::popMatrices();
     
 }
+
