@@ -60,6 +60,7 @@ class CharacterPoint {
         std::vector<  CharacterPoint* > mNeighbours;
     
         Vec3f savePosition;
+        Vec3f saveTarget;
     
     private:
     

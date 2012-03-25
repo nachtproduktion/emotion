@@ -133,7 +133,7 @@ int Character::getRandPointNumber() {
 void Character::createNewStructure(int _num) {
     
     
-    ballImage = gl::Texture( loadImage( loadResource( "kopf.png" ) ) );
+    //ballImage = gl::Texture( loadImage( loadResource( "kopf.png" ) ) );
         
     mParticleController.clear();
     mBonds.clear();
@@ -345,6 +345,11 @@ void Character::wince( int _amount ) {
 void Character::jump( int _amount ) {
     mMovement.jump( niko::getTimeMS() + 2000, _amount );
 }
+
+void Character::center() {
+    mMovement.moveToCenter();
+}
+
 
 void Character::move(Vec3f _position, Quatf _rotation) {
 

@@ -11,6 +11,7 @@ using namespace std;
 #define JUMP   1
 #define SPHERE 2
 #define BACK   3
+#define CENTER 4
 
 CharacterMovement::CharacterMovement() {
     
@@ -99,6 +100,24 @@ void CharacterMovement::moveOnSphere( Vec3f _target, Vec3f _parent, time_t _ms )
     mActive[SPHERE] = true;
 }
 
+void CharacterMovement::moveToCenter( time_t _ms ) {
+    
+    mStartTimes[CENTER] = niko::getTimeMS();
+    if( _ms == 0 ) { mTargetTimes[CENTER] = mStartTimes[CENTER] + 500; }
+    else { mTargetTimes[CENTER] = _ms; }
+    
+    Vec3f targetDirection = mpCharacterPoints->at(0).getPosition();
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
+        //Save Position & Target
+        p->savePosition = p->getPosition();
+        p->saveTarget = p->getPosition() - targetDirection;        
+    }
+    
+    mActive[CENTER] = true;
+ 
+}
+
 void CharacterMovement::setBack( time_t _ms ) {
     
     if( _ms != 0 ) {
@@ -136,8 +155,11 @@ void CharacterMovement::update() {
     if( mActive[BACK] ) {
         setBack();
     }
-  
-    //Moving
+    
+    if( mActive[CENTER] ) {
+        _moveToCenter();
+    }
+    
     if( mActive[WINCE] && !mActive[JUMP] ) { 
         _wince();
     }    
@@ -215,7 +237,7 @@ void CharacterMovement::_jump() {
     }
 }
 
-ci::Vec3f CharacterMovement::_moveOnSphere() {
+void CharacterMovement::_moveOnSphere() {
     /*
     // SLERP
     // position t von 0 - 1;
@@ -247,3 +269,34 @@ ci::Vec3f CharacterMovement::_moveOnSphere() {
     return newPosition;
   */
 }
+
+void CharacterMovement::_moveToCenter() {
+    
+    time_t timeDelta = mTargetTimes[CENTER] - niko::getTimeMS();
+    
+    if ( timeDelta <= 0 ) { 
+        
+        for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
+            p->moveTo(p->saveTarget);
+        }
+        
+        mActive[CENTER] = false;
+        return;    
+    }
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
+        
+        float t = niko::mapping( timeDelta, 0, mTargetTimes[CENTER] - mStartTimes[CENTER], 0, 1, true);
+        t = ci::easeInBack( t ); 
+        
+        Vec3f newPosition = p->saveTarget + (p->savePosition - p->saveTarget)*t;
+        p->moveTo(newPosition);
+           
+    }
+}
+
+
+
+
+
+

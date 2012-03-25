@@ -66,6 +66,7 @@ class Character {
     void dance();
     void wince( int _amount = 50 );
     void jump( int _amount = 50 );
+    void center();
     //RENAME
     void test();
     void setNextBeat( time_t _bang );
