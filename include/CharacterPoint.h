@@ -31,8 +31,9 @@ class CharacterPoint {
         void setNeighbours( CharacterPoint* _neighbour );
         int  getNeighboursSize();
     
-        void setBondID( int _id );
-        int getBondID();
+        void addBondID( int _id );
+        int getNumberOfBonds();
+        int getBondID( int _index );
     
         void setParticleControllerID( int _id );
         int getParticleControllerID();
@@ -62,10 +63,10 @@ class CharacterPoint {
     
     private:
     
-        bool    mEndOfLine;
-        bool    mActive;
-        int     mParticleControllerID;
-        int     mBondID;
+        bool                    mEndOfLine;
+        bool                    mActive;
+        int                     mParticleControllerID;
+        std::vector <int>       mBondIDs;
     
         //Physic
         Physics::World3D*       mPhysic;

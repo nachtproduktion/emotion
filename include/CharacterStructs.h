@@ -22,6 +22,12 @@ struct Bond {
         b = _particleB->getParticle();
         s = NULL;
         
+        //Level 1 = Außen
+        //Level 2 = Innen
+        //...
+        
+        mLevel = 2;
+        
         mStrength = SPRING_STRENGTH;
         mSaveDistanceA = a->getPosition().distance(b->getPosition());
         mSaveDistanceB = mSaveDistanceA;
@@ -57,6 +63,7 @@ struct Bond {
         gl::drawLine(a->getPosition(), b->getPosition());
     }
     
+    int   mLevel;
     float mStrength;
     float mSaveDistanceA;
     float mSaveDistanceB;

@@ -89,8 +89,8 @@ void Character::mkPoint(CharacterPoint *lastPoint, bool firstPoint) {
         mBonds.push_back( Bond( lastPoint , &mCharacterPoints.back() ) );
         mBonds.back().makeBond( &mPhysics );
         
-        mCharacterPoints.back().setBondID( mBonds.size()-1 );
-        lastPoint->setBondID( mBonds.size()-1 );
+        mCharacterPoints.back().addBondID( mBonds.size()-1 );
+        lastPoint->addBondID( mBonds.size()-1 );
         
         
         mkPoint( &mCharacterPoints.back() );
@@ -162,6 +162,11 @@ void Character::createNewStructure(int _num) {
     // POST SETTINGS
     for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
         p->postSettings();
+        
+        if(p->getEndOfLine()) {
+            mBonds[p->getBondID(0)].mLevel = 1;
+        }
+        
     }
     
     //Create Charactermovement
@@ -400,7 +405,7 @@ void Character::test() {
         if( p->getEndOfLine() ) {
            
             ci::Vec3f randVec = Rand::randVec3f();
-            randVec *= mBonds[p->getBondID()].getBondLength();
+            randVec *= mBonds[p->getBondID(0)].getBondLength();
             
             //p->moveOnSphere( randVec );
             //p->moveBy(direction);

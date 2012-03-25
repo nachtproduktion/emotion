@@ -14,7 +14,6 @@ CharacterPoint::CharacterPoint() {
     mActive        = false;
     
     mParticleControllerID = -1;
-    mBondID = -1;
     savePosition = ci::Vec3f::zero();
 }
 
@@ -28,7 +27,6 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     mActive        = false;
     
     mParticleControllerID = -1;
-    mBondID = -1;
     savePosition = _pos;
     
     Physics::Particle3D* p = mPhysic->makeParticle(_pos);        
@@ -83,12 +81,19 @@ int CharacterPoint::getNeighboursSize() {
     return mNeighbours.size();
 }
 
-void CharacterPoint::setBondID( int _id ) {
-    mBondID = _id;
+void CharacterPoint::addBondID( int _id ) {
+    mBondIDs.push_back( _id );
 }
 
-int CharacterPoint::getBondID() {
-    return mBondID;
+int CharacterPoint::getNumberOfBonds() {
+    return mBondIDs.size();
+}
+
+int CharacterPoint::getBondID( int _index ) {
+    if(getNumberOfBonds() > _index) {
+        return mBondIDs[ _index ];
+    }
+    else { return -1; }
 }
 
 void CharacterPoint::setParticleControllerID( int _id ) {

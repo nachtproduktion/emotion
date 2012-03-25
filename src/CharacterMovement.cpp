@@ -36,14 +36,14 @@ void CharacterMovement::wince( int _amount, bool _soft ) {
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
         if( p->getEndOfLine() ) {
         
-            float bondLength = (*mpBonds)[p->getBondID()].getBondLength();
+            float bondLength = (*mpBonds)[p->getBondID(0)].getBondLength();
             
             if(!mActive[WINCE]) {
-                mpBonds->at(p->getBondID()).mSaveDistanceA = bondLength;
+                mpBonds->at(p->getBondID(0)).mSaveDistanceA = bondLength;
             }
             
             float newLength = niko::mapping( _amount, 0, 100, 0, bondLength );
-            mpBonds->at(p->getBondID()).setBondLength( newLength );
+            mpBonds->at(p->getBondID(0)).setBondLength( newLength );
             
             if( !_soft ) {
                 Vec3f pos = p->getPosition();
@@ -161,21 +161,20 @@ void CharacterMovement::_wince() {
     
     bool ready = true;
 
-    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
-        if( p->getEndOfLine() ) {
-            
-            float bondLength = (*mpBonds)[p->getBondID()].getBondLength();
-            float saveBondLength = (*mpBonds)[p->getBondID()].mSaveDistanceA;
+    for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){  
+        if( p->mLevel == 1 ) {
+        
+            float bondLength = p->getBondLength();
+            float saveBondLength = p->mSaveDistanceA;
             
             float difference = saveBondLength - bondLength;
             
             if( fabs( difference ) <= 1 ) {
-                mpBonds->at(p->getBondID()).setBondLength( saveBondLength );
+                p->setBondLength( saveBondLength );
             } else {
                 ready = false;
-                mpBonds->at(p->getBondID()).setBondLength( bondLength + difference/10 ); 
+                p->setBondLength( bondLength + difference/10 ); 
             }
-            
         }
     }
     
