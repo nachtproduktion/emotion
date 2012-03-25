@@ -300,7 +300,7 @@ void Character::scale( float _s ) {
     
     for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){
         p->setBondLength( p->getBondLength() * _s );
-        p->mSaveDistance *= _s;    
+        p->mSaveDistanceA *= _s;    
     } 
     
     mFrustrationAtt.changeWorld( CENTER, mRadius );
@@ -335,6 +335,10 @@ void Character::dance() {
 
 void Character::wince( int _amount ) {
     mMovement.wince( _amount );
+}
+
+void Character::jump( int _amount ) {
+    mMovement.jump( niko::getTimeMS() + 2000, _amount );
 }
 
 void Character::move(Vec3f _position, Quatf _rotation) {

@@ -8,7 +8,9 @@ using namespace ci::app;
 using namespace std;
 
 #define WINCE  0
-#define SPHERE 1
+#define JUMP   1
+#define SPHERE 2
+#define BACK   3
 
 CharacterMovement::CharacterMovement() {
     
@@ -16,9 +18,7 @@ CharacterMovement::CharacterMovement() {
         mStartTimes[i]      = 0;
         mTargetTimes[i]     = 0;
         mActive[i]          = false;
-        mTargetPositions[i] = ci::Vec3f::zero();
     }
-    
 }
 
 void CharacterMovement::setup(  std::vector<CharacterPoint> * _pCP,  std::vector<Bond> * _pBonds ) {
@@ -29,13 +29,17 @@ void CharacterMovement::setup(  std::vector<CharacterPoint> * _pCP,  std::vector
 
 void CharacterMovement::wince( int _amount, bool _soft ) {
         
+    //Keine Aktion wenn Springen akitiviert ist
+    if(mActive[JUMP]) { return; }
+    
+    
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
         if( p->getEndOfLine() ) {
         
             float bondLength = (*mpBonds)[p->getBondID()].getBondLength();
             
             if(!mActive[WINCE]) {
-                mpBonds->at(p->getBondID()).mSaveDistance = bondLength;
+                mpBonds->at(p->getBondID()).mSaveDistanceA = bondLength;
             }
             
             float newLength = niko::mapping( _amount, 0, 100, 0, bondLength );
@@ -57,8 +61,30 @@ void CharacterMovement::wince( int _amount, bool _soft ) {
     
 }
 
-void CharacterMovement::moveOnSphere( Vec3f _target, Vec3f _parent, time_t _ms ) {
+void CharacterMovement::jump( time_t _ms, int _amount ) {
+        
+    mStartTimes[JUMP] = niko::getTimeMS();
+    mTargetTimes[JUMP] = _ms;
+    
+    if(mActive[JUMP]) { return; }
+    
+    for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){ 
+        
+        float bondLength = p->getBondLength();
+        
+        if(!mActive[WINCE]) {
+            p->mSaveDistanceA = bondLength;
+        }
+        
+        p->mSaveDistanceB = bondLength * 0.75;
+    }
+    
+    mActive[WINCE] = false;
+    mActive[JUMP] = true;
+}
 
+void CharacterMovement::moveOnSphere( Vec3f _target, Vec3f _parent, time_t _ms ) {
+/*
     mStartTimes[SPHERE] = niko::getTimeMS();
         
     //Set Target Time
@@ -68,9 +94,36 @@ void CharacterMovement::moveOnSphere( Vec3f _target, Vec3f _parent, time_t _ms )
     //Set Target Position
     mTargetPositions[SPHERE] = _target;
     mParentSphere            = _parent;
-    
+  */  
     //Start Moving
     mActive[SPHERE] = true;
+}
+
+void CharacterMovement::setBack( time_t _ms ) {
+    
+    if( _ms != 0 ) {
+        mTargetTimes[BACK] = _ms;
+        mStartTimes[BACK] = niko::getTimeMS();
+    }
+    
+    time_t timeDelta = mTargetTimes[BACK] - niko::getTimeMS();
+    
+    if ( timeDelta <= 0 ) { 
+        for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){  
+            p->setBondLength( p->mSaveDistanceA );
+        }
+        mActive[BACK] = false;
+        return;
+    }
+    
+    float t = niko::mapping( timeDelta, 0, mTargetTimes[BACK] - mStartTimes[BACK], 1, 0, true);
+    t = ci::easeInQuad( t ); 
+    
+    for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){  
+        float distLenght = niko::mapping( t, 0, 1, p->mSaveDistanceB, p->mSaveDistanceA);
+        p->setBondLength( distLenght );
+    }
+    
 }
 
 ////////////////////////
@@ -79,11 +132,19 @@ void CharacterMovement::moveOnSphere( Vec3f _target, Vec3f _parent, time_t _ms )
 
 void CharacterMovement::update() {
 
+    
+    if( mActive[BACK] ) {
+        setBack();
+    }
   
     //Moving
-    if( mActive[WINCE] ) { 
+    if( mActive[WINCE] && !mActive[JUMP] ) { 
         _wince();
     }    
+    
+    if( mActive[JUMP] ) {
+        _jump();
+    }
     
     if( mActive[SPHERE] ) { 
        // mCurrentPosition = _moveOnSphere();
@@ -104,7 +165,7 @@ void CharacterMovement::_wince() {
         if( p->getEndOfLine() ) {
             
             float bondLength = (*mpBonds)[p->getBondID()].getBondLength();
-            float saveBondLength = (*mpBonds)[p->getBondID()].mSaveDistance;
+            float saveBondLength = (*mpBonds)[p->getBondID()].mSaveDistanceA;
             
             float difference = saveBondLength - bondLength;
             
@@ -123,8 +184,40 @@ void CharacterMovement::_wince() {
     }
 }
 
-ci::Vec3f CharacterMovement::_moveOnSphere() {
+void CharacterMovement::_jump() {
     
+    time_t timeDelta = mTargetTimes[JUMP] - niko::getTimeMS();
+    
+    if ( timeDelta <= 0 ) { 
+        //auseinander
+        for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){  
+            float newLength = p->getBondLength() * 1.5;
+            p->setBondLength( newLength );
+            p->mSaveDistanceB = newLength;
+        }
+        
+        //und zurück
+        mStartTimes[BACK] = niko::getTimeMS();
+        mTargetTimes[BACK] = mStartTimes[BACK] + 1500;
+        mActive[BACK] = true;
+        mActive[JUMP] = false;
+        return;
+    } else {     
+        
+        float t = niko::mapping( timeDelta, (mTargetTimes[JUMP] - mStartTimes[JUMP])/10, mTargetTimes[JUMP] - mStartTimes[JUMP], 1, 0, true);
+        t = ci::easeNone( t ); 
+        
+        for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){  
+            float distLenght = niko::mapping( t, 0, 1, p->mSaveDistanceA, p->mSaveDistanceB);
+            p->setBondLength( distLenght );
+        }
+        
+        
+    }
+}
+
+ci::Vec3f CharacterMovement::_moveOnSphere() {
+    /*
     // SLERP
     // position t von 0 - 1;
     // a.slerp( t, b )
@@ -153,5 +246,5 @@ ci::Vec3f CharacterMovement::_moveOnSphere() {
     newPosition += mParentSphere;
     
     return newPosition;
-  
+  */
 }

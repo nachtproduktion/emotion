@@ -12,7 +12,7 @@
 #include "CharacterStructs.h"
 #include "CharacterPoint.h"
 
-#define MOVEMENTS 2
+#define MOVEMENTS 4
 
 extern int fps;
 
@@ -22,7 +22,9 @@ class CharacterMovement {
     void        setup(  std::vector<CharacterPoint> * _pCP,  std::vector<Bond> * _pBonds );
     
     void        wince( int _amount = 50, bool _soft = true );
+    void        jump( time_t _ms, int _amount = 50 );
     void        moveOnSphere( ci::Vec3f _target, ci::Vec3f _parent, time_t _ms = 0 );
+    void        setBack( time_t _ms = 0 );
     
     void        update();
     
@@ -31,6 +33,7 @@ private:
     
     //FUNC
     void        _wince();
+    void        _jump();
     ci::Vec3f   _moveOnSphere();
     
     //VAR
@@ -39,11 +42,6 @@ private:
     
     time_t      mStartTimes[MOVEMENTS];
     time_t      mTargetTimes[MOVEMENTS];
-    
-    ci::Vec3f   mCurrentPosition;
-    ci::Vec3f   mTargetPositions[MOVEMENTS];
-    
-    ci::Vec3f   mParentSphere;
     
     bool        mActive[MOVEMENTS];
     

@@ -23,11 +23,12 @@ struct Bond {
         s = NULL;
         
         mStrength = SPRING_STRENGTH;
-        mSaveDistance = a->getPosition().distance(b->getPosition());
+        mSaveDistanceA = a->getPosition().distance(b->getPosition());
+        mSaveDistanceB = mSaveDistanceA;
     }
     
     void makeBond( MSA::Physics::World3D * _physics ) {
-        s = _physics->makeSpring(a, b, mStrength, mSaveDistance);
+        s = _physics->makeSpring(a, b, mStrength, mSaveDistanceA);
     }
     
     void killBond( MSA::Physics::World3D * _physics ) {
@@ -57,7 +58,8 @@ struct Bond {
     }
     
     float mStrength;
-    float mSaveDistance;
+    float mSaveDistanceA;
+    float mSaveDistanceB;
     MSA::Physics::Particle3D * a;
     MSA::Physics::Particle3D * b;
     MSA::Physics::Spring3D *s;

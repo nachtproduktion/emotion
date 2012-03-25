@@ -65,6 +65,7 @@ class Character {
     void move(Vec3f _position, Quatf _rotation);
     void dance();
     void wince( int _amount = 50 );
+    void jump( int _amount = 50 );
     //RENAME
     void test();
     void setNextBeat( time_t _bang );

@@ -246,6 +246,7 @@ void emotionApp::keyDown( KeyEvent event )
         case 'i': mInfoPanel.toggleState(); break;
         case '1': mToggleDance = !mToggleDance; break;
         case '2': mCharacter.wince(); break;
+        case '3': mCharacter.jump(); break;
         case 'd': mCharacter.mDrawCharacter = !mCharacter.mDrawCharacter; break;
     }
 
