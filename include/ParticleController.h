@@ -19,7 +19,7 @@ class ParticleController {
     public:
         ParticleController();
         void addParticles( int _number );
-        void setTarget( ci::Vec3d _target ) ;
+        void setTarget( ci::Vec3f _target ) ;
         void calcVelocity();
         void update();
         void draw();

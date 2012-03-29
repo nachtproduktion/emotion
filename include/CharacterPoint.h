@@ -28,8 +28,18 @@ class CharacterPoint {
         void setParticle();
         Physics::Particle3D* getParticle();
     
-        void setNeighbours( CharacterPoint* _neighbour );
-        int  getNeighboursSize();
+        void setParent( CharacterPoint* _neighbour );
+        void addChild( CharacterPoint* _neighbour );
+        void clearChilds();
+    
+        CharacterPoint* getParent();
+        CharacterPoint* getChild( int _index );
+        int getNumberOfChilds();
+    
+//        void setNeighbours( CharacterPoint* _neighbour );
+//        int  getNeighboursSize();
+        int getID();
+    
     
         void addBondID( int _id );
         int getNumberOfBonds();
@@ -48,6 +58,7 @@ class CharacterPoint {
         void setFree();
     
         Vec3f getPosition();
+        Vec3f* getPositionPointer();
     
         bool getEndOfLine();
         bool getActive();
@@ -57,12 +68,20 @@ class CharacterPoint {
         
         void render();
         
-        std::vector<  CharacterPoint* > mNeighbours;
+//        std::vector<  CharacterPoint* > mNeighbours;
     
         Vec3f savePosition;
         Vec3f saveTarget;
     
+    
+        int   mLevel;
+    
     private:
+    
+        CharacterPoint *        mParent;
+        std::vector<  CharacterPoint* > mChilds;
+    
+        Vec3f                   mPosition;
     
         bool                    mEndOfLine;
         bool                    mActive;

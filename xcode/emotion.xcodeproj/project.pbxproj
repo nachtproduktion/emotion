@@ -18,6 +18,7 @@
 		2371E4F2151ABDE3009745BD /* EmoAttractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2371E4F1151ABDE3009745BD /* EmoAttractor.cpp */; };
 		238A25461515261500F233DB /* kopf.png in Resources */ = {isa = PBXBuildFile; fileRef = 238A25451515261500F233DB /* kopf.png */; };
 		238F2B751514B49500673859 /* BeatController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 238F2B741514B49500673859 /* BeatController.cpp */; };
+		2394779115214B8C00D9B422 /* _codeSnippet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2394779015214B8C00D9B422 /* _codeSnippet.cpp */; };
 		23A75423150FBE2200666518 /* Color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753BA150FBE2200666518 /* Color.cpp */; };
 		23A75424150FBE2200666518 /* MSACoreGL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753C1150FBE2200666518 /* MSACoreGL.cpp */; };
 		23A7542A150FBE2200666518 /* MSAObjCPointer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23A753D2150FBE2200666518 /* MSAObjCPointer.cpp */; };
@@ -49,6 +50,7 @@
 		238A25451515261500F233DB /* kopf.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = kopf.png; path = ../resources/kopf.png; sourceTree = "<group>"; };
 		238F2B741514B49500673859 /* BeatController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BeatController.cpp; path = ../src/BeatController.cpp; sourceTree = "<group>"; };
 		238F2B771514B49B00673859 /* BeatController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BeatController.h; path = ../include/BeatController.h; sourceTree = "<group>"; };
+		2394779015214B8C00D9B422 /* _codeSnippet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = _codeSnippet.cpp; path = ../src/_codeSnippet.cpp; sourceTree = "<group>"; };
 		23A753B8150FBE2200666518 /* ChanTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChanTraits.h; sourceTree = "<group>"; };
 		23A753B9150FBE2200666518 /* CinderMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CinderMath.h; sourceTree = "<group>"; };
 		23A753BA150FBE2200666518 /* Color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Color.cpp; sourceTree = "<group>"; };
@@ -125,15 +127,16 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				2394779015214B8C00D9B422 /* _codeSnippet.cpp */,
 				23D325C7151D3DEE00563D81 /* InfoPanel.cpp */,
 				00BAE6590E7ED9C10018A608 /* emotionApp.cpp */,
+				238F2B741514B49500673859 /* BeatController.cpp */,
 				2371E4F1151ABDE3009745BD /* EmoAttractor.cpp */,
 				23EB8A8015191D7A00CC3D2D /* ParticleController.cpp */,
-				238F2B741514B49500673859 /* BeatController.cpp */,
+				23F904B1150BE0370040F1A3 /* Particle.cpp */,
 				23F904BA150BFA460040F1A3 /* Character.cpp */,
 				23D325CD151E09B200563D81 /* CharacterPoint.cpp */,
 				23D325CE151E09B200563D81 /* CharacterMovement.cpp */,
-				23F904B1150BE0370040F1A3 /* Particle.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -284,16 +287,16 @@
 			isa = PBXGroup;
 			children = (
 				23D325C5151D3DE600563D81 /* InfoPanel.h */,
-				2371E4F4151ABDF3009745BD /* EmoAttractor.h */,
 				32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */,
 				23CE9750150C147D00E0A515 /* niko_functionen.h */,
+				238F2B771514B49B00673859 /* BeatController.h */,
+				2371E4F4151ABDF3009745BD /* EmoAttractor.h */,
 				23EB8A8315191D8100CC3D2D /* ParticleController.h */,
+				23F904AF150BE0330040F1A3 /* Particle.h */,
 				23F904BC150BFA4E0040F1A3 /* Character.h */,
 				23D325F2151EA8C100563D81 /* CharacterStructs.h */,
 				23D325D1151E09BB00563D81 /* CharacterPoint.h */,
 				23D325D2151E09BB00563D81 /* CharacterMovement.h */,
-				23F904AF150BE0330040F1A3 /* Particle.h */,
-				238F2B771514B49B00673859 /* BeatController.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -388,6 +391,7 @@
 				23D325C8151D3DEE00563D81 /* InfoPanel.cpp in Sources */,
 				23D325CF151E09B300563D81 /* CharacterPoint.cpp in Sources */,
 				23D325D0151E09B300563D81 /* CharacterMovement.cpp in Sources */,
+				2394779115214B8C00D9B422 /* _codeSnippet.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -50,17 +50,20 @@ class Character {
 	Character();
     Character( ci::Vec3f _pos, float _radius, Quatf _rotation );
     
-    void draw();
-    void update();
-    void mkPoint(CharacterPoint *lastPoint, bool firstPoint = false);
     void createNewStructure( int _num );
+    void mkPoint(CharacterPoint *lastPoint, int _level);
+    int  getRandPointNumber( int _min = 0, int _max = 4 );
+    
     void createPhysics();
     void createParticleController(); 
-    void updateAttractors();
-    void updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement );
+    void createSplinesA();
+    void createSplinesB();
+    void pathFinder( CharacterPoint *_lastPoint, int _childID, std::vector<CharacterPoint*> _path );
+    int countEnds(); 
+    
+    
     void setRadius( float _r );
     void scale( float _s );
-    int  getRandPointNumber();
     void addRandomForce( float _f );
     void move(Vec3f _position, Quatf _rotation);
     void dance();
@@ -70,14 +73,23 @@ class Character {
     void sphere();
     //RENAME
     void test();
-    void setNextBeat( time_t _bang );
-   
+    void setNextBeat( time_t _bang );    
+  
+    void updateSplines();
+    void updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement );
+    void update();
+    
+    void draw();
+    
+
     bool        mDrawCharacter;
     
     float       mRadius;
     int         mNumberOfCharacterPoints;
     int         mCharacterPointsLeft;
     bool        mOpenLines;
+    int         mMaxLevels;
+    
     time_t      mNextBeat;
 
     std::vector<CharacterPoint> mCharacterPoints;
@@ -86,6 +98,10 @@ class Character {
     //VIEWING
     ci::Vec3f   mCenterPosition;
     Quatf       mRotation;
+    
+    //Spline & Path
+    std::vector< std::vector<CharacterPoint*> > mPaths;
+    std::vector<BSpline3f>  mSplines;
     
     //Particle
     std::vector<ParticleController>  mParticleController;
@@ -97,11 +113,7 @@ class Character {
     
     //EmoAttractos
     EmoAttractor            mFrustrationAtt;
-    EmoAttractor            mEngagementAtt;
-    
-    
-    //
-    gl::Texture         ballImage;
+    EmoAttractor            mEngagementAtt;    
     
 };
 

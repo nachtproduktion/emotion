@@ -133,8 +133,7 @@ void emotionApp::setup()
     mKeyDown = false;
     mInfoPanel.createTexture( Vec2i( 20, 350 ) );
     
-    glDisable( GL_TEXTURE_2D );
-	
+    //GL
 	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
 	gl::enableDepthWrite();
 	gl::enableDepthRead();

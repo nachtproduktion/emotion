@@ -15,7 +15,7 @@ void ParticleController::addParticles( int _number ) {
     
 }
 
-void ParticleController::setTarget( ci::Vec3d _target ) {
+void ParticleController::setTarget( ci::Vec3f _target ) {
     mTarget = _target;
 }
 

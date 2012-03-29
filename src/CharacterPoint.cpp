@@ -10,11 +10,15 @@ CharacterPoint::CharacterPoint() {
     mPhysic         = NULL;
     mParticle       = NULL;
     
+    mParent         = NULL;
+    
     mEndOfLine     = true;
     mActive        = false;
     
     mParticleControllerID = -1;
     savePosition = ci::Vec3f::zero();
+    
+    mPosition = ci::Vec3f::zero();
 }
 
 CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, int _pID ) {
@@ -23,11 +27,15 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     mPhysic         = _physics;
     mParticle       = NULL;
     
+    mParent         = NULL;
+    
     mEndOfLine     = true;
     mActive        = false;
     
     mParticleControllerID = -1;
     savePosition = _pos;
+    
+    mPosition      = _pos;
     
     Physics::Particle3D* p = mPhysic->makeParticle(_pos);        
     p->setMass(4.0f)->setBounce(0.2f)->setRadius(5.0f)->enableCollision()->makeFree();
@@ -38,24 +46,22 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
 
 void CharacterPoint::postSettings() {
     
-    if( getNeighboursSize() == 1 ) { 
-        mEndOfLine = true;
-        setMass(4.0f);
-    }
-    else {
-        mEndOfLine = false; 
-        
-        if(getFixed()) { //Startpunkt
-            setMass(150.0f);
-            setRadius(10.0f);
-            setFree();
+    if(mParent == NULL) {
+        //Startpunkt
+        setMass(150.0f);
+        setRadius(10.0f);
+        mEndOfLine = false;
+    } else {
+        if ( getNumberOfChilds() == 0 ) {
+            mEndOfLine = true;
+            setMass(4.0f);
         }
-        else { 
+        else {
+            mEndOfLine = false;
             setMass(10.0f);
             setRadius(7.0f);
         }
-        
-    } 
+    }
     
 }
 
@@ -67,18 +73,47 @@ void CharacterPoint::setParticle() {
     mParticle = mPhysic->getParticle(mParticleID);
 }
 
-void CharacterPoint::setNeighbours( CharacterPoint* _neighbour ) {
-    
-    mNeighbours.push_back( _neighbour );
-    
-    //Physics::Particle3D *a = getParticle();
-    //Physics::Particle3D *b = _neighbour->getParticle();
-    //mPhysic->makeSpring(a, b, SPRING_STRENGTH, a->getPosition().distance(b->getPosition()));
+void CharacterPoint::setParent( CharacterPoint* _parent ) {
+    mParent = _parent;
 }
 
+void CharacterPoint::addChild( CharacterPoint* _child ) {
+    mChilds.push_back( _child );
+}
 
-int CharacterPoint::getNeighboursSize() {
-    return mNeighbours.size();
+void CharacterPoint::clearChilds() {
+    mChilds.clear();
+}
+
+CharacterPoint* CharacterPoint::getParent() {
+    return mParent;
+}
+
+CharacterPoint* CharacterPoint::getChild( int _index ) {
+    
+    if(getNumberOfChilds() > _index) {
+        return mChilds[ _index ];
+    }
+    else { return NULL; }
+}
+
+int CharacterPoint::getNumberOfChilds() {
+    return mChilds.size();
+}
+
+//void CharacterPoint::setNeighbours( CharacterPoint* _neighbour ) {
+//    
+//    mNeighbours.push_back( _neighbour );
+//    
+//}
+//
+//
+//int CharacterPoint::getNeighboursSize() {
+//    return mNeighbours.size();
+//}
+
+int CharacterPoint::getID() {
+    return mParticleID;
 }
 
 void CharacterPoint::addBondID( int _id ) {
@@ -93,7 +128,7 @@ int CharacterPoint::getBondID( int _index ) {
     if(getNumberOfBonds() > _index) {
         return mBondIDs[ _index ];
     }
-    else { return -1; }
+    else { return NULL; }
 }
 
 void CharacterPoint::setParticleControllerID( int _id ) {
@@ -134,6 +169,11 @@ void CharacterPoint::setFree() {
 
 Vec3f CharacterPoint::getPosition() {
     return mParticle->getPosition();
+}
+
+Vec3f* CharacterPoint::getPositionPointer() {
+    mPosition = getPosition();
+    return &mPosition;
 }
 
 bool CharacterPoint::getEndOfLine() {

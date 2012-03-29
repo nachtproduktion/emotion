@@ -48,10 +48,10 @@ void CharacterMovement::wince( int _amount, bool _soft ) {
             
             if( !_soft ) {
                 Vec3f pos = p->getPosition();
-                pos -= p->mNeighbours[0]->getPosition();
+                pos -= p->getParent()->getPosition();
                 pos.normalize();
                 pos *= newLength;
-                pos += p->mNeighbours[0]->getPosition();
+                pos += p->getParent()->getPosition();
                 p->moveTo( pos );
             }
 
@@ -98,20 +98,18 @@ void CharacterMovement::moveOnSphere( float _angle, time_t _ms ) {
     
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
         if( p->getEndOfLine() ) {
-            
-            if( p->getNeighboursSize() != 1 ) { return; }
-                         
+             
             //zufall ziel
             p->savePosition = p->getPosition();
             
-            Vec3f target = p->savePosition - p->mNeighbours[0]->getPosition();
+            Vec3f target = p->savePosition - p->getParent()->getPosition();
             target.normalize();
             target.rotateX(angleInRadiansX);
             target.rotateY(angleInRadiansY);
             target.rotateZ(angleInRadiansZ);
             
             target *= mpBonds->at(p->getBondID(0)).getBondLength();
-            target += p->mNeighbours[0]->getPosition();
+            target += p->getParent()->getPosition();
             
             //Save Position & Target
             p->saveTarget = target;    
@@ -283,15 +281,13 @@ void CharacterMovement::_moveOnSphere() {
     
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
         if( p->getEndOfLine() ) {
-            
-            if( p->getNeighboursSize() != 1 ) { continue; }
 
             float t = niko::mapping( timeDelta, 0, mTargetTimes[SPHERE] - mStartTimes[SPHERE], 1, 0, true);
             t = ci::easeInOutQuad( t ); 
             
             
-            Vec3f mVecA = p->savePosition - p->mNeighbours[0]->getPosition();
-            Vec3f mVecB = p->saveTarget - p->mNeighbours[0]->getPosition();;
+            Vec3f mVecA = p->savePosition - p->getParent()->getPosition();
+            Vec3f mVecB = p->saveTarget - p->getParent()->getPosition();;
             
             mVecA.normalize();
             mVecB.normalize();
@@ -299,7 +295,7 @@ void CharacterMovement::_moveOnSphere() {
             ci::Vec3f newPosition = mVecA.slerp( t, mVecB );
             
             newPosition *= mpBonds->at(p->getBondID(0)).getBondLength();
-            newPosition += p->mNeighbours[0]->getPosition();
+            newPosition += p->getParent()->getPosition();
             
             p->moveTo( newPosition );
             
