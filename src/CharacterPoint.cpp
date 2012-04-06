@@ -19,6 +19,7 @@ CharacterPoint::CharacterPoint() {
     savePosition = ci::Vec3f::zero();
     
     mPosition = ci::Vec3f::zero();
+    mShellRadius = 0.0f;
 }
 
 CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, int _pID ) {
@@ -41,6 +42,7 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     p->setMass(4.0f)->setBounce(0.2f)->setRadius(5.0f)->enableCollision()->makeFree();
     
     setParticle();
+    calcShellRadius();
     
 }
 
@@ -141,6 +143,7 @@ int CharacterPoint::getParticleControllerID() {
 
 void CharacterPoint::setRadius( float _r ) {
     mParticle->setRadius( _r );
+    calcShellRadius();
 }
 
 float CharacterPoint::getRadius() {
@@ -182,6 +185,14 @@ bool CharacterPoint::getEndOfLine() {
 
 bool CharacterPoint::getActive() {
     return mActive;
+}
+
+void CharacterPoint::calcShellRadius() {
+    mShellRadius = getRadius() * 4;
+}
+
+float CharacterPoint::getShellRadius() {
+    return mShellRadius;
 }
 
 void CharacterPoint::moveTo( Vec3f _target ) {

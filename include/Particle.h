@@ -5,17 +5,26 @@
 
 #include <vector>
 
+#include "cinder/Matrix.h"
+
 class Particle {
  public:
+    
 	Particle( ci::Vec3f _pos, ci::Vec3f _vel );
+    Particle( float _radius, ci::Vec3f _pos, float _theta, float _u );
+    Particle( ci::Matrix44f* _matrix, float _radius );
+        
+    void calcPosition();
+    
     void findPerlin();
 	void findVelocity();
     void setPosition();
+    void updatePosition( ci::Vec3f _pos );
     void update();
 	void render();
     
 	
-	ci::Vec3f	mPosition;
+	
     ci::Vec3f	mVelocity;
     ci::Vec3f   mPerlin;
 	
@@ -26,6 +35,20 @@ class Particle {
 	float		mLifeSpan;
 	
 	bool		mIsDead;
+    bool        mSphere;
+    bool        mCircle;
     
+    float theta, u;
+    float vTheta, vU;
+    float radius;
+    
+private:
+    
+    ci::Vec3f                   mPosition;
+    ci::Vec3f                   mPositionOnCircle;
+    float                       mCircleRadius;	
+    ci::Matrix44f*              mControllerMatrix;
+    
+
     
 };

@@ -19,6 +19,9 @@ using namespace ci::app;
 using namespace std;
 
 int fps;
+//Billboard
+ci::Vec3f bup;
+ci::Vec3f br;
 
 class emotionApp : public AppBasic {
   public:
@@ -59,6 +62,7 @@ class emotionApp : public AppBasic {
     // CAMERA
 	CameraPersp			mCam;
 	float				mCameraDistance;
+    float               mLastCameraDistance;
     
     //ArcBall
     Arcball             mArcball;
@@ -115,9 +119,6 @@ void emotionApp::setup()
 	mParams = params::InterfaceGl( "Kamera", Vec2i( 200, 300 ) );
     mParams.addParam( "Framerate", &fps, "", true);
     mParams.addSeparator();
-	//mParams.addParam( "Scene Rotation", &mSceneRotation, "opened=1" );
-	mParams.addParam( "Eye Distance", &mCameraDistance, "min=50.0 max=1500.0 step=50.0" ); //keyIncr=s keyDecr=w" );
-    mParams.addSeparator();
     mParams.addParam( "S-Radius", &mSphereRadius, "min=20 max=500 step=1" );
     mParams.addParam( "C-Points", &mCPoints, "min=1 max=50 step=1" );
     mParams.addParam( "F-Amount", &mFAmount, "min=5 max=50 step=1" );
@@ -145,7 +146,7 @@ void emotionApp::resize( ResizeEvent event )
 {
 	mArcball.setWindowSize( getWindowSize() );
 	mArcball.setCenter( getWindowCenter() );
-	mArcball.setRadius( 150 );
+	mArcball.setRadius( 200 );
     
     mCam.setPerspective( 50.0f, getWindowAspectRatio(), 0.1f, 10000.0f );
 	gl::setMatrices( mCam );	    
@@ -156,16 +157,27 @@ void emotionApp::update()
     fps = getAverageFps();
     
     // UPDATE CAMERA
-	mCam.lookAt( Vec3f( 0, 0, mCameraDistance ), Vec3f::zero() );
     
+    Quatf quat = mArcball.getQuat();
+    //quat.w *= -1.0f; // reverse rotation
+    
+    Vec3f cam_target = mCharacter.mCenterPosition;
+    Vec3f cam_offset = quat * Vec3f(0,0,mCameraDistance);
+    Vec3f cam_eye    = cam_target - cam_offset;
+    Vec3f cam_up     = quat * Vec3f(0,-1,0);
+    mCam.lookAt(cam_eye, cam_target, cam_up);
+    
+	//mCam.lookAt( Vec3f( 0, 0, mCameraDistance ), Vec3f::zero() );
+        
     // EMOTION UPDATE
     checkEmotions();
     updateCharacters();
     
     // BEAT CONTROLLER
+    /*
     if( ci::app::getElapsedFrames() > 10 ) 
         mBeatController.update();
-   
+   */
 }
 
 void emotionApp::updateCharacters() {
@@ -186,23 +198,25 @@ void emotionApp::checkEmotions() {
 }
 
 void emotionApp::draw()
-{
+{  
     
-    // clear out the window with black
-    gl::clear( Color( 0.0f, 0.1f, 0.2f ) );
+    glClearColor( 0.0025f, 0.1f, 0.2f, 1 );
+	gl::enableDepthWrite( true );
+	gl::enableDepthRead( true );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	gl::enableAlphaBlending();
+    
     
     // KAMERA
-    gl::setMatrices( mCam );
+    gl::setMatrices( mCam ); 
     
-    gl::enableDepthWrite();
-	gl::enableDepthRead();
-    gl::enableAlphaBlending(); 
-    
+    mCam.getBillboardVectors(&br, &bup);
+
     
     // CHARACTER
     mCharacter.draw();
 
-  
+    
     // DRAW PARAMS WINDOW + INFO PANEL
 	params::InterfaceGl::draw();
     drawInfoPanel();
@@ -262,11 +276,12 @@ void emotionApp::keyUp( KeyEvent event ) {
 void emotionApp::mouseDown( MouseEvent event )
 {
 	Vec2i P = event.getPos();
-	P.y = getWindowHeight() - P.y;
+	//P.y = getWindowHeight() - P.y;
 	mArcball.mouseDown( P );
     
     mMouseDown = event.getPos();
     mLastCharPosition = mCharPosition;
+    mLastCameraDistance = mCameraDistance;
 }
 
 
@@ -274,15 +289,16 @@ void emotionApp::mouseDrag( MouseEvent event ) {
 	
     if(!mKeyDown) {
         Vec2i P = event.getPos();
-        P.y = getWindowHeight() - P.y;
+       // P.y = getWindowHeight() - P.y;
         mArcball.mouseDrag( P );
     } else if( mKeyDown == 'q') {
         //x+y achse
-        mCharPosition.x = mLastCharPosition.x + (event.getX() - mMouseDown.x);
-        mCharPosition.y = mLastCharPosition.y - (event.getY() - mMouseDown.y);
+        //mCharPosition.x = mLastCharPosition.x + (event.getX() - mMouseDown.x);
+        //mCharPosition.y = mLastCharPosition.y - (event.getY() - mMouseDown.y);
     } else if( mKeyDown == 'w') {
         //z achse
-        mCharPosition.z = mLastCharPosition.z + (event.getY() - mMouseDown.y);
+        mCameraDistance = mLastCameraDistance + (event.getY() - mMouseDown.y); 
+        //mCharPosition.z = mLastCharPosition.z + (event.getY() - mMouseDown.y);
     } 
   
 }

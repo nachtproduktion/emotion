@@ -25,6 +25,7 @@
 #include "EmoAttractor.h"
 #include "CharacterStructs.h"
 #include "CharacterPoint.h"
+#include "CharacterSpline.h"
 #include "CharacterMovement.h"
 
 using namespace ci;
@@ -79,6 +80,7 @@ class Character {
     void updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement );
     void update();
     
+    void drawRoom(); 
     void draw();
     
 
@@ -101,10 +103,12 @@ class Character {
     
     //Spline & Path
     std::vector< std::vector<CharacterPoint*> > mPaths;
-    std::vector<BSpline3f>  mSplines;
+    //std::vector<BSpline3f>                      mSplines;
+    std::vector<CharacterSpline>                mCharacterSplines;
     
     //Particle
     std::vector<ParticleController>  mParticleController;
+    gl::Texture                      mParticleTexture;
     
     //Physics
     Physics::World3D        mPhysics;

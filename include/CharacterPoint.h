@@ -63,6 +63,9 @@ class CharacterPoint {
         bool getEndOfLine();
         bool getActive();
     
+        void calcShellRadius();
+        float getShellRadius();
+    
         void moveTo( Vec3f _target );
         void moveBy( Vec3f _dir );
         
@@ -87,6 +90,8 @@ class CharacterPoint {
         bool                    mActive;
         int                     mParticleControllerID;
         std::vector <int>       mBondIDs;
+    
+        float                   mShellRadius;
     
         //Physic
         Physics::World3D*       mPhysic;

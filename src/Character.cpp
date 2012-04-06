@@ -5,6 +5,7 @@
 #include "cinder/gl/Texture.h"
 #include "cinder/ImageIo.h"
 #include "cinder/BSpline.h"
+#include "Resources.h"
 
 #include <math.h>
 
@@ -55,6 +56,7 @@ void Character::createNewStructure(int _num) {
     mParticleController.clear();
     mBonds.clear();
     mCharacterPoints.clear();
+    mCharacterSplines.clear();
     
     //Physics
     createPhysics();
@@ -97,11 +99,18 @@ void Character::createNewStructure(int _num) {
     mEngagementAtt.setEngagement();
     
     //create pathes for splines
-    createSplinesB();
+    createSplinesA();
+    //createSplinesB();
+    
+    //updateSplines();
     
     //create ParticleController
-    updateSplines();
-    createParticleController();
+    
+    //createParticleController();
+    
+    //Textures
+    mParticleTexture	= gl::Texture( loadImage( loadResource( RES_PARTICLE ) ) );
+    
 }
 
 void Character::mkPoint(CharacterPoint *lastPoint, int _level) {
@@ -220,9 +229,13 @@ int Character::getRandPointNumber( int _min, int _max ) {
 
 void Character::createPhysics() {
     
+    float width = 2000.0f;
+    float height = 200.0f;
+    
     //physics.verbose = true;			// dump activity to log
     mPhysics.setGravity(Vec3f(0, GRAVITY, 0));
-    mPhysics.setWorldSphere(CENTER, mRadius);
+    mPhysics.setWorldSize(Vec3f(-width/2, -height, -width/2), Vec3f(width/2, height, width/2));
+    //mPhysics.setWorldSphere(CENTER, mRadius);
     mPhysics.setSectorCount(SECTOR_COUNT);
     
     //Schwerfälligkeit
@@ -237,32 +250,67 @@ void Character::createPhysics() {
 
 void Character::createParticleController() {
     
-    int numSegments = 20;
-    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){                
-        for( int s = 0; s <= numSegments; ++s ) {
-            mParticleController.push_back( ParticleController( ) );
-        }
-    }
+    //Kreise an Splines
     
-    /* for ends
+   
+//    
+//    
+//    int numSegments = 50;
+//    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){  
+//        for( int s = 0; s <= numSegments; ++s ) {
+//            float t = s / (float)numSegments;
+//            mParticleController.push_back( ParticleController( ) );
+//            mParticleController.back().mPosition = p->getPosition( t );
+//            
+//            
+//            float sradius = niko::mapping(s, 0, numSegments, 10.0f, 20.0f);
+//            sradius = Rand::randFloat(sradius-2, sradius+2);
+//            
+//            
+//            mParticleController.back().setCircle( sradius );
+//        }
+//    }
+
+    
+    
+    
+    //Kugeln an Splines
+//    int numSegments = 20;
+//    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){  
+//        for( int s = 0; s <= numSegments; ++s ) {
+//            float t = s / (float)numSegments;
+//            mParticleController.push_back( ParticleController( ) );
+//            mParticleController.back().mPosition = p->getPosition( t );
+//            
+//            
+//            float sradius = niko::mapping(s, 0, 18, 20.0f, 10.0f);
+//            sradius = Rand::randFloat(sradius-5, sradius+5);
+//            if(s > 17) sradius = 2.0f;
+//            
+//            
+//            mParticleController.back().setSphere( sradius );
+//        }
+//    }
+    
+
+      //Kugeln an Knotenpunkten
+//    int counter = 0;
+//     
+//    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){  
+//        
+//        mParticleController.push_back( ParticleController( ) );
+//        mParticleController.back().mPosition = p->getPosition();
+//        mParticleController.back().setSphere( p->getShellRadius() );
+//        p->setParticleControllerID( counter );
+//        counter++;
+//
+//    }
      
-    int counter = 0;
-     
-    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){  
-        if( p->getEndOfLine() ) {
-            
-            mParticleController.push_back( ParticleController( ) );
-            p->setParticleControllerID( counter );
-            counter++;
-            
-        }
-    }
-     */
 }
 
 void Character::createSplinesA() {
     
-    mSplines.clear();
+    mPaths.clear();
     
     for( int z = 0; z < mCharacterPoints.size(); z++ ) {
         
@@ -270,30 +318,39 @@ void Character::createSplinesA() {
             
             int pointlevel = mCharacterPoints[z].mLevel;
             
-            // Pointer Variante
-            //Vec3f * points[ pointlevel + 1 ];
-            //points[mCharacterPoints[z].mLevel] = mCharacterPoints[z].getPositionPointer();
-            
-            vector<Vec3f> points;
-            points.push_back( mCharacterPoints[z].getPosition() );
+            std::vector<CharacterPoint*> points;
+            points.push_back( &mCharacterPoints[z] );
             
             CharacterPoint* lastPoint = &mCharacterPoints[z];
+            
             for( int i = pointlevel - 1; i >= 0 ; i-- ) {
                 
                 lastPoint = lastPoint->getParent();
+                points.push_back( lastPoint );
                 
-                // Pointer Variante
-                //points[i] = lastPoint->getPositionPointer();
-                
-                points.push_back( lastPoint->getPosition() );
             }
-             
-            //Spline( int numControlPoints, const T *controlPoints, int degree, bool loop, const float *knots );
-            BSpline3f newSpline = BSpline3f(points, pointlevel, false, true);
-            mSplines.push_back( newSpline );
+           
+            mPaths.push_back( points );
             
         }
-	}   
+	} 
+    
+    //make CharacterSplines
+    mCharacterSplines.clear();
+
+    for( int i = 0; i < mPaths.size(); i++) {
+        
+        vector<Vec3f> newPoints;
+        for( int u = 0; u < mPaths[i].size(); u++ ) {
+            newPoints.push_back( mPaths[i][u]->getPosition() );
+        }
+        
+        mCharacterSplines.push_back( CharacterSpline( newPoints ) );
+    }
+
+    
+    
+    
 }
 
 void Character::createSplinesB() {
@@ -384,7 +441,7 @@ void Character::setRadius( float _r ) {
         scale(scaleFactor);
     
         mRadius = _r;
-        mPhysics.setWorldSphere(CENTER, mRadius);
+        //mPhysics.setWorldSphere(CENTER, mRadius);
         
      }
 }
@@ -476,18 +533,19 @@ void Character::test() {
     
     
     if(count == 0) {
-        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
-            p->turnOff();
-        }   
+//        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+//            p->turnOff();
+//        }   
         count = 1;
+        mPhysics.setGravity(Vec3f(0, 3, 0));
     }
     else {
-        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
-            p->turnOn();
-        }   
+//        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+//            p->turnOn();
+//        }   
         count = 0;
+        mPhysics.setGravity(Vec3f(0, 0, 0));
     }
-    
 }
 
 //////////////////////////////////////////////
@@ -495,9 +553,7 @@ void Character::test() {
 //////////////////////////////////////////////
 
 void Character::updateSplines() {
-    mSplines.clear();
     
-    //make Splines
     for( int i = 0; i < mPaths.size(); i++) {
         
         vector<Vec3f> newPoints;
@@ -505,8 +561,7 @@ void Character::updateSplines() {
             newPoints.push_back( mPaths[i][u]->getPosition() );
         }
         
-        BSpline3f newSpline = BSpline3f(newPoints, mPaths[i].size()-1, false, true);
-        mSplines.push_back( newSpline );     
+        mCharacterSplines[i].update( newPoints );
     }
     
 }
@@ -545,52 +600,94 @@ void Character::update() {
     mMovement.update();
     
     if(!mDrawCharacter) {
+        
         //Splines Update
         updateSplines();
-
-        //Particle Spline
-        int numSegments = 20;
-        int counter = 0;
-        for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){                
-            for( int s = 0; s <= numSegments; ++s ) {
-                float t = s / (float)numSegments;
-                mParticleController[counter].setTarget( p->getPosition( t ) );
-                counter++;
-            }
-        }
+        
     }
     
     
     //Mainpoint update
-    /*
-    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
-       
-        int pcID = p->getParticleControllerID();
-        if(pcID > -1) {
-            mParticleController[pcID].setTarget(p->getPosition());
-        }
-    }
-    */
+//    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
+//       
+//        int pcID = p->getParticleControllerID();
+//        if(pcID > -1) {
+//            mParticleController[pcID].setTarget(p->getPosition());
+//        }
+//    }
     
-    //Particle Update
-    for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
-        p->update();
-    }
+    
+//    //Particle Update
+//    for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
+//        p->update();
+//    }
     
     //physics update
     mPhysics.update();
+    
+    if( mCharacterPoints.size() > 0) {
+        mCenterPosition = mCharacterPoints[0].getPosition();
+    }
 }
 
 //////////////////////////////////////////////
 // RENDER FUNCTIONS //////////////////////////
 //////////////////////////////////////////////
 
+void Character::drawRoom() {
+    
+    float width = 2000.0f;
+    float height = 200.0f;
+    
+    float a = 0.2f;
+    
+    glBegin(GL_QUADS);
+    // draw right wall
+    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(width/2, height+1, width/2);
+    glColor4f(1, 1, 1, a);				glVertex3f(width/2, -height, width/2);
+    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(width/2, -height, -width/2);
+    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(width/2, height+1, -width/2);
+    
+    // back wall
+    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(width/2, height+1, -width/2);
+    glColor4f(1, 1, 1, a);				glVertex3f(width/2, -height, -width/2);
+    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(-width/2, -height, -width/2);
+    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(-width/2, height+1, -width/2);
+    
+    // left wall
+    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(-width/2, height+1, -width/2);
+    glColor4f(1, 1, 1, a);				glVertex3f(-width/2, -height, -width/2);
+    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(-width/2, -height, width/2);
+    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(-width/2, height+1, width/2);
+    
+    // front wall
+    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(width/2, -height, width/2);
+    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(width/2, height+1, width/2);
+    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(-width/2, height+1, width/2);
+    glColor4f(1, 1, 1, a);				glVertex3f(-width/2, -height, width/2);
+    
+    // floor
+    glColor4f(.8, 0.8, 0.8, a);
+    glVertex3f(width/2, height+1, width/2);
+    glVertex3f(width/2, height+1, -width/2);
+    glVertex3f(-width/2, height+1, -width/2);
+    glVertex3f(-width/2, height+1, width/2);
+    glEnd();
+    
+}
+
 void Character::draw() {
+    
+
+    
+    
     
     gl::pushMatrices();
     
-        gl::translate( mCenterPosition );
-        gl::rotate( mRotation );
+    drawRoom();
+    
+        //gl::translate( mCenterPosition );
+        //gl::rotate( mRotation );
         
    
     
@@ -604,13 +701,13 @@ void Character::draw() {
             }
     
          
-            gl::color(0,1,0,0.4);
-            gl::enableWireframe();
-            gl::drawStrokedCircle(CENTER.xy(), mRadius);
+            //gl::color(0,1,0,0.4);
+            //gl::enableWireframe();
+            //gl::drawStrokedCircle(CENTER.xy(), mRadius);
             //gl::drawSphere(CENTER, mRadius, 64);
-            gl::disableWireframe();
+           // gl::disableWireframe();
             
-            gl::color(1,0,0);
+            //gl::color(1,0,0);
         
             if(mDrawCharacter) {
         
@@ -643,16 +740,13 @@ void Character::draw() {
                 
                 
                 
-                const int numSegments = 100;
+//                const int numSegments = 30;
                 gl::color( ColorA( 0.8f, 0.2f, 0.8f, 0.5f ) );
                 glLineWidth( 2.0f );
                 /*
                 glBegin( GL_LINE_LOOP );
                 for( int s = 0; s <= numSegments; ++s ) {
                     float t = s / (float)numSegments;
-                    
-                    
-                    
                     
                     
                     for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){ 
@@ -668,20 +762,41 @@ void Character::draw() {
                  */
                 
                 
-                for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){                
-                    glBegin( GL_LINE_STRIP );
-                    for( int s = 0; s <= numSegments; ++s ) {
-                        float t = s / (float)numSegments;
-                        gl::vertex( p->getPosition( t ) + Vec3f( 0.0f, 0.5f, 0.0f ) );
-                    }
-                    glEnd();
-                }
+//                for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){                
+//                    glBegin( GL_LINE_STRIP );
+//                    for( int s = 0; s <= numSegments; ++s ) {
+//                        float t = s / (float)numSegments;
+//                        gl::vertex( p->getPosition( t ) + Vec3f( 0.0f, 0.5f, 0.0f ) );
+//                    }
+//                    glEnd();
+//                }
                  
+                
+//                for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
+//                    p->drawFrameSlices( 2.25f );
+//                    p->drawFrames( 1.5f );
+//                    p->drawParticle();
+//                }
+                
+                
+                glEnable( GL_TEXTURE_2D );
+                
+                gl::enableDepthWrite( false );
+                glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+                
+                gl::enableAdditiveBlending();
+                mParticleTexture.bind();
                  
-                //PARTICLE
-                for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
-                    //p->draw();
+                for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
+                    p->drawParticle();
                 }
+                
+                mParticleTexture.unbind();
+                
+                gl::enableDepthWrite( true );
+                gl::enableAlphaBlending();
+                
+                glDisable( GL_TEXTURE_2D );
             }
  
         gl::popMatrices();

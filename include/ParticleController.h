@@ -6,6 +6,10 @@
 #include "cinder/Rand.h"
 #include "cinder/Vector.h"
 
+#include "cinder/BSpline.h"
+#include "cinder/Matrix.h"
+#include "cinder/TriMesh.h"
+
 #include <list>
 #include <vector>
 
@@ -18,17 +22,44 @@ using namespace std;
 class ParticleController {
     public:
         ParticleController();
+        
+        void setCircleRadius( float _radius );
+    
         void addParticles( int _number );
+    
+        void updateMatrix( ci::Matrix44f _matrix );
+        void update();
+    
+        void render();
+    
+    private:
+    
+        float                               mCircleRadius;			// points to tube (read extrude)
+        ci::Matrix44f                       mMatrix;
+    
+        std::list<Particle>	mParticles;
+    
+    /*
+        void setSphere( float _radius );
+        void setCircle( ci::Vec3f _pos, float _radius );
+    
+        
         void setTarget( ci::Vec3f _target ) ;
         void calcVelocity();
+    
+        void update( ci::Vec3f _pos );
         void update();
         void draw();
     
-        std::list<Particle>	mParticles;
-        ci::Vec3f mPosition;
-        ci::Vec3f mTarget;
-        ci::Vec3f mVelocity;
-
+        
+        ci::Vec3f       mPosition;
+        ci::Vec3f       mTarget;
+        ci::Vec3f       mVelocity;
+    
+        float mSphereRadius;
+        float mCircleRadius;
+     
+     */
 
 };
 
