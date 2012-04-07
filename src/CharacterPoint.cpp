@@ -16,6 +16,8 @@ CharacterPoint::CharacterPoint() {
     mActive        = false;
     
     mParticleControllerID = -1;
+    mStandBondID          = -1;
+    
     savePosition = ci::Vec3f::zero();
     
     mPosition = ci::Vec3f::zero();
@@ -34,36 +36,17 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     mActive        = false;
     
     mParticleControllerID = -1;
+    mStandBondID          = -1;
+    
     savePosition = _pos;
     
     mPosition      = _pos;
     
     Physics::Particle3D* p = mPhysic->makeParticle(_pos);        
-    p->setMass(4.0f)->setBounce(0.2f)->setRadius(5.0f)->enableCollision()->makeFree();
+    p->setMass(4.0f)->setBounce(0.5f)->setRadius(5.0f)->enableCollision()->makeFree();
     
     setParticle();
     calcShellRadius();
-    
-}
-
-void CharacterPoint::postSettings() {
-    
-    if(mParent == NULL) {
-        //Startpunkt
-        setMass(150.0f);
-        setRadius(10.0f);
-        mEndOfLine = false;
-    } else {
-        if ( getNumberOfChilds() == 0 ) {
-            mEndOfLine = true;
-            setMass(4.0f);
-        }
-        else {
-            mEndOfLine = false;
-            setMass(10.0f);
-            setRadius(7.0f);
-        }
-    }
     
 }
 
@@ -133,6 +116,14 @@ int CharacterPoint::getBondID( int _index ) {
     else { return NULL; }
 }
 
+void CharacterPoint::setStandBondID( int _id ) {
+    mStandBondID = _id;
+}
+
+int CharacterPoint::getStandBondID() {
+    return mStandBondID;
+}
+
 void CharacterPoint::setParticleControllerID( int _id ) {
     mParticleControllerID = _id;
 }
@@ -178,6 +169,11 @@ Vec3f* CharacterPoint::getPositionPointer() {
     mPosition = getPosition();
     return &mPosition;
 }
+
+void CharacterPoint::setEndOfLine( bool _eol ) {
+    mEndOfLine = _eol;
+}
+
 
 bool CharacterPoint::getEndOfLine() {
     return mEndOfLine;

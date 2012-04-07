@@ -22,7 +22,7 @@ Character::Character()
     mMaxLevels = 0;
     
     mForceTimer = false;
-    mNumberOfCharacterPoints = 0;
+    mNumberOfRootPoints = 0;
     mNextBeat = niko::getTimeMS();
     
     mDrawCharacter = true;
@@ -38,7 +38,7 @@ Character::Character( ci::Vec3f _pos, float _radius, Quatf _rotation )
     mMaxLevels = 0;
     
     mForceTimer = false;
-    mNumberOfCharacterPoints = 0;
+    mNumberOfRootPoints = 0;
     mNextBeat = niko::getTimeMS();
     
     mDrawCharacter = true;
@@ -62,33 +62,10 @@ void Character::createNewStructure(int _num) {
     createPhysics();
     mPhysics.clear();
     
-    mNumberOfCharacterPoints = mCharacterPointsLeft = _num;
-    mCharacterPoints.reserve( _num );    
+    mNumberOfRootPoints = _num;
     
-    //First Point
-    mCharacterPoints.push_back( CharacterPoint( CENTER, &mPhysics, mCharacterPoints.size() ) );
-    mCharacterPointsLeft--;
-    
-    //mCharacterPoints.back().setFixed();
-    //mCharacterPoints.back().setMass(40.0f);
-    
-    //mOpenLines = false;
-    
-    mkPoint(&mCharacterPoints.back(), 1);
-    
-    //cout << "erstellt:" << mCharacterPointsLeft << endl;    //debug
-
-    
-    // POST SETTINGS
-    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
-        p->postSettings();
+    createCharacter();
         
-        if(p->getEndOfLine()) {
-            mBonds[p->getBondID(0)].mLevel = 1;
-        }
-        
-    }
-    
     //Create Charactermovement
     mMovement.setup( &mCharacterPoints, &mBonds );
     
@@ -99,96 +76,246 @@ void Character::createNewStructure(int _num) {
     mEngagementAtt.setEngagement();
     
     //create pathes for splines
+    createRootSpline();
     createSplinesA();
     //createSplinesB();
-    
-    //updateSplines();
-    
-    //create ParticleController
-    
-    //createParticleController();
-    
+        
     //Textures
     mParticleTexture	= gl::Texture( loadImage( loadResource( RES_PARTICLE ) ) );
     
 }
 
-void Character::mkPoint(CharacterPoint *lastPoint, int _level) {
+void Character::createCharacter() {
     
-    if( mMaxLevels < _level ) mMaxLevels = _level;
+    int minRootPoints = 2; 
+    int maxRootPoints = mNumberOfRootPoints;
     
-    int newPoints = 1;
-    if( _level == 1 ) {
-        if( mCharacterPointsLeft > 3 ) {
-            newPoints = getRandPointNumber( 2, floor(mCharacterPointsLeft/2) );
-            mCharacterPointsLeft -= (newPoints*2)-1;
-        }
-        else if( mCharacterPointsLeft > 0 ) { 
-            newPoints = 1;
-            mCharacterPointsLeft -= newPoints;
-        } else {
-            newPoints = 0;
-        }
-    } else if ( _level == 2 ) {
-        newPoints = getRandPointNumber( 1, floor(mCharacterPointsLeft) );
-        mCharacterPointsLeft -= newPoints;
-    }
-    else {
-        if(mOpenLines) {
-            newPoints = getRandPointNumber( 0, floor(mCharacterPointsLeft) );
-        }
-        else {
-            newPoints = getRandPointNumber( 1, floor(mCharacterPointsLeft) );
-        }
-        mCharacterPointsLeft -= newPoints;
-    }
-       
+    int rootPoints = Rand::randInt(minRootPoints, maxRootPoints);
+    mNumberOfRootPoints = rootPoints;
+    
+    //Character Point Level
+    // 0 - Root
+    // 1 - Joint
+    // 2 - Feeler
+    
+    //Character Point Function
+    //
+    // Root:
+    // 0 - Middel
+    // 1 - Start
+    // 2 - End
+    //
+    // Feeler:
+    // 0 - Normal
+    // 1 - Stand
     
     
-    for(int i = 0; i<newPoints; i++) {
+    //CharacterVec
+    int PointCounter = rootPoints;
+    
+    std::vector < std::vector < int > > CharacterVector;
+    for( int a = 0; a < rootPoints; a++ ) {
         
-        if ( _level == 1 && i > 0 ) {
-            mCharacterPointsLeft++;
-        }
+        int jointPoints = getRandPointNumber( 1, 3 );
+        std::vector <int> jointFeelerSize;
         
-        //cout << "i:" << i << " level: " << _level << " left:" << mCharacterPointsLeft << " newP: " << newPoints << endl;   //DEBUG
+        for( int b = 0; b < jointPoints; b++ ) {
+            
+            int feelerPoints = getRandPointNumber( 0, 5 );
+            if( a == 0 || a == rootPoints-1 ) {
+               feelerPoints = getRandPointNumber( 1, 5 ); 
+            }
+            
+            jointFeelerSize.push_back( feelerPoints );
+            
+            PointCounter += feelerPoints;
+            
+        } //for b
         
-        //Wenn alle Punkte aufgebraucht sind
-        //if( mCharacterPointsLeft <= 0 ) { return; }
+        CharacterVector.push_back( jointFeelerSize );
+        PointCounter += jointPoints;
         
-        if( newPoints > i+1 && newPoints > 1) { mOpenLines = true; }
-        
-        //Neue Koordinaten berechnen
-        ci::Vec3f randVec = Rand::randVec3f();
-        randVec.normalize();
-        randVec *= Rand::randFloat(30.0f,80.0f);                   // BERECHNUNG?!?!?!??!!?
-        randVec += lastPoint->getPosition();
-        
-        //randVec *= Rand::randFloat(mRadius);
-        //randVec += mCenterPos;
-        
-        mCharacterPoints.push_back( CharacterPoint( randVec, &mPhysics, mCharacterPoints.size() ) );
-        
-        //set Parent + Level
-        mCharacterPoints.back().setParent( lastPoint );
-        mCharacterPoints.back().mLevel = _level;
-        
-        //add Child to Parent
-        lastPoint->addChild( &mCharacterPoints.back() );
+    } //for a
+    
+    //Set Charactervector Size
+    mCharacterPoints.reserve( PointCounter );
+    
+    
+    //BUILD CHARACTER
+    CharacterPoint *pRootPoint = NULL;
+    ci::Vec3f position = CENTER;
 
-        //set bonds
-        mBonds.push_back( Bond( lastPoint , &mCharacterPoints.back() ) );
-        mBonds.back().makeBond( &mPhysics );
+    //backbone
+    CharacterPoint *pBackboneTop = NULL;
+    CharacterPoint *pBackboneBottom = NULL;
+    
+    //ROOT POINTS
+    for( int a = 0; a < CharacterVector.size(); a++ ) {
         
-        mCharacterPoints.back().addBondID( mBonds.size()-1 );
-        lastPoint->addBondID( mBonds.size()-1 );
+        mCharacterPoints.push_back( CharacterPoint( position, &mPhysics, mCharacterPoints.size() ) );
+        mCharacterPoints.back().mLevel = CPL_ROOT;
         
-        mkPoint( &mCharacterPoints.back(), _level + 1 );           
- 
+        if( a == 0 ) { 
+            mCharacterPoints.back().mFunction = CPF_END;
+            pBackboneBottom = &mCharacterPoints.back();
+        }
+        else if( a == CharacterVector.size() - 1 )  { 
+            mCharacterPoints.back().mFunction = CPF_START; 
+            pBackboneTop = &mCharacterPoints.back();
+        }
+        else { mCharacterPoints.back().mFunction = CPF_MIDDLE; }
+        
+        
+        if(a > 0) {
+            setRelations( pRootPoint , &mCharacterPoints.back() );
+            setBonds( pRootPoint , &mCharacterPoints.back() );
+        }
+        
+        pRootPoint = &mCharacterPoints.back();
+        
+        //Settings
+        
+        setProperties(pRootPoint, CPL_ROOT);
+        
+        CharacterPoint *pJointPoint = NULL;
+        
+        int jointDistance = Rand::randFloat(30.0f,80.0f);
+        
+        //JOINT POINTS
+        for( int b = 0; b < CharacterVector[a].size(); b++ ) {
+            
+            position = pRootPoint->getPosition();
+            
+            float twopi = 6.28318531f;
+            float angle = twopi/CharacterVector[a].size()*b;
+            
+            position   += ci::Vec3f( cos( angle )*jointDistance, 0, sin( angle )*jointDistance );
+            
+            
+            mCharacterPoints.push_back( CharacterPoint( position, &mPhysics, mCharacterPoints.size() ) );
+            if( CharacterVector[a][b] == 0 ) {
+                mCharacterPoints.back().mLevel = CPL_FEELER;
+                mCharacterPoints.back().mFunction = CPF_NORMAL;
+            }
+            else { 
+                mCharacterPoints.back().mLevel = CPL_JOINT;
+                mCharacterPoints.back().mFunction = 0;
+            }
+            
+            pJointPoint = &mCharacterPoints.back();
+            
+            setRelations( pRootPoint , pJointPoint );
+            setBonds( pRootPoint , pJointPoint );
+            
+            //settings
+            setProperties(pJointPoint, pJointPoint->mLevel);
+            
+            //FEELER POINTS
+            for( int c = 0; c < CharacterVector[a][b]; c++ ) {
+                
+                position = pJointPoint->getPosition() + Rand::randVec3f() * Rand::randFloat(30.0f,80.0f);   // BERECHNUNG?!?!?!??!!?
+                
+                mCharacterPoints.push_back( CharacterPoint( position, &mPhysics, mCharacterPoints.size() ) );
+                mCharacterPoints.back().mLevel = CPL_FEELER;
+                
+                CharacterPoint *pFeelerPoint = &mCharacterPoints.back();
+
+                setRelations( pJointPoint , pFeelerPoint );
+                setBonds( pJointPoint , pFeelerPoint );
+                
+                //settings
+                setProperties(pFeelerPoint, CPL_FEELER);
+                
+                if( pRootPoint->mFunction == CPF_END ) { pFeelerPoint->mFunction = CPF_STAND; }
+                else { pFeelerPoint->mFunction = CPF_NORMAL; }
+                
+            }
+            
+        }
+                
+        //Neue Koordinaten berechnen
+        position = pRootPoint->getPosition() + ci::Vec3f(0,-50,0);
+        
     }
     
-    mOpenLines = false;
     
+    // POST SETTINGS
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
+        if(p->getEndOfLine()) {
+            mBonds[p->getBondID(0)].mLevel = 1;
+        }
+    }
+    
+    //make backbone
+    if(pBackboneBottom != NULL && pBackboneTop != NULL) {
+        mBackboneBond = Bond(pBackboneTop, pBackboneBottom);
+        mBackboneBond.makeBond( &mPhysics );
+    } 
+    
+    //Stands
+    mStandBonds.clear();
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
+        if( p->mLevel == CPL_FEELER && p->mFunction == CPF_STAND ) {
+            
+            float length = 0;
+            
+            for( int i = 0; i < p->getParent()->getNumberOfBonds(); i++ ) {
+                if( mBonds[p->getParent()->getBondID(i)].mLevel == 2 ) {
+                    length = mBonds[p->getParent()->getBondID(i)].getBondLength();
+                    
+                }
+            }
+             
+            length += mBonds[p->getBondID(0)].getBondLength();
+            
+            mStandBonds.push_back( Bond(pBackboneBottom, &(*p)) );
+            mStandBonds.back().mStrength = 0.3f;
+            mStandBonds.back().makeBond( &mPhysics );
+            mStandBonds.back().mSaveMaxLength = length;
+            
+            p->setStandBondID( mStandBonds.size()-1 );
+        }
+    }
+    
+
+}
+
+void Character::setProperties( CharacterPoint *_point, int _typ ) {
+    
+    switch ( _typ ) {
+        case CPL_ROOT:
+            _point->setMass(150.0f);
+            _point->setRadius(12.0f);
+            _point->setEndOfLine(false);
+            break;
+        case CPL_JOINT:
+            _point->setMass(20.0f);
+            _point->setRadius(8.0f);
+            _point->setEndOfLine(false);
+            break;
+        case CPL_FEELER:
+            _point->setMass(5.0f);
+            _point->setRadius(6.0f);
+            _point->setEndOfLine(true);
+            break;
+    }
+}
+
+void Character::setRelations( CharacterPoint *_parent, CharacterPoint *_child ) {
+    //set Parent
+    _child->setParent( _parent );
+    //add Child to Parent
+    _parent->addChild( _child );
+}
+
+void Character::setBonds( CharacterPoint *_parent, CharacterPoint *_child ) {
+    //set bonds
+    mBonds.push_back( Bond( _parent , _child ) );
+    mBonds.back().makeBond( &mPhysics );
+    
+    //add Bond IDs
+    _child->addBondID( mBonds.size()-1 );
+    _parent->addBondID( mBonds.size()-1 );
 }
 
 int Character::getRandPointNumber( int _min, int _max ) {
@@ -199,15 +326,15 @@ int Character::getRandPointNumber( int _min, int _max ) {
     int min = _min;
     if ( min >= max ) { min = max - 1; }
     
-    int percent[6] = { 0, 60, 72, 84, 94, 100 };
+    int percent[6] = { 0, 10, 40, 92, 97, 100 };
     
     int randomInt = Rand::randInt(percent[ min ], percent[ max ]);
     
-    // 00 - 60; 60% NewPoints: 0
-    // 60 - 72; 12% NewPoints: 1
-    // 72 - 84; 12% NewPoints: 2
-    // 84 - 94; 10% NewPoints: 3
-    // 94 - 100; 6% NewPoints: 4
+    // 00 - 10; 10% NewPoints: 0
+    // 10 - 40; 30% NewPoints: 1
+    // 40 - 92; 52% NewPoints: 2
+    // 92 - 97;  5% NewPoints: 3
+    // 97 - 100; 3% NewPoints: 4
     
     if( randomInt < percent[1] ) {
         return 0;
@@ -248,64 +375,34 @@ void Character::createPhysics() {
     
 }
 
-void Character::createParticleController() {
+void Character::createRootSpline() {
     
-    //Kreise an Splines
+    mRootPath.clear();
     
-   
-//    
-//    
-//    int numSegments = 50;
-//    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){  
-//        for( int s = 0; s <= numSegments; ++s ) {
-//            float t = s / (float)numSegments;
-//            mParticleController.push_back( ParticleController( ) );
-//            mParticleController.back().mPosition = p->getPosition( t );
-//            
-//            
-//            float sradius = niko::mapping(s, 0, numSegments, 10.0f, 20.0f);
-//            sradius = Rand::randFloat(sradius-2, sradius+2);
-//            
-//            
-//            mParticleController.back().setCircle( sradius );
-//        }
-//    }
-
+    for( int z = 0; z < mCharacterPoints.size(); z++ ) {
+        if( mCharacterPoints[z].mLevel == CPL_ROOT && mCharacterPoints[z].mFunction == CPF_START ) {
+            
+            CharacterPoint* lastPoint = &mCharacterPoints[z];
+            while( lastPoint->mFunction != CPF_END ) {
+                mRootPath.push_back( lastPoint );
+                lastPoint = lastPoint->getParent();    
+            }
+            
+            mRootPath.push_back( lastPoint );
+            
+        }
+    }
+    
+    //Make Root Spline
+    vector<Vec3f> newPoints;
+    for( int u = 0; u < mRootPath.size(); u++ ) {
+        newPoints.push_back( mRootPath[u]->getPosition() );
+    }
+    
+    mCharacterRoot = CharacterSpline( newPoints );
+    mCharacterRoot.setRoot();
     
     
-    
-    //Kugeln an Splines
-//    int numSegments = 20;
-//    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){  
-//        for( int s = 0; s <= numSegments; ++s ) {
-//            float t = s / (float)numSegments;
-//            mParticleController.push_back( ParticleController( ) );
-//            mParticleController.back().mPosition = p->getPosition( t );
-//            
-//            
-//            float sradius = niko::mapping(s, 0, 18, 20.0f, 10.0f);
-//            sradius = Rand::randFloat(sradius-5, sradius+5);
-//            if(s > 17) sradius = 2.0f;
-//            
-//            
-//            mParticleController.back().setSphere( sradius );
-//        }
-//    }
-    
-
-      //Kugeln an Knotenpunkten
-//    int counter = 0;
-//     
-//    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){  
-//        
-//        mParticleController.push_back( ParticleController( ) );
-//        mParticleController.back().mPosition = p->getPosition();
-//        mParticleController.back().setSphere( p->getShellRadius() );
-//        p->setParticleControllerID( counter );
-//        counter++;
-//
-//    }
-     
 }
 
 void Character::createSplinesA() {
@@ -316,23 +413,20 @@ void Character::createSplinesA() {
         
         if(mCharacterPoints[z].getEndOfLine()) {
             
-            int pointlevel = mCharacterPoints[z].mLevel;
-            
             std::vector<CharacterPoint*> points;
-            points.push_back( &mCharacterPoints[z] );
-            
             CharacterPoint* lastPoint = &mCharacterPoints[z];
             
-            for( int i = pointlevel - 1; i >= 0 ; i-- ) {
-                
-                lastPoint = lastPoint->getParent();
+            while( lastPoint->mLevel != CPL_ROOT ) {
                 points.push_back( lastPoint );
-                
+                lastPoint = lastPoint->getParent();
             }
-           
+            
+            points.push_back( lastPoint ); 
             mPaths.push_back( points );
             
         }
+
+        
 	} 
     
     //make CharacterSplines
@@ -347,9 +441,6 @@ void Character::createSplinesA() {
         
         mCharacterSplines.push_back( CharacterSpline( newPoints ) );
     }
-
-    
-    
     
 }
 
@@ -526,31 +617,81 @@ void Character::addRandomForce(float _f) {
     }
 }
 
+void Character::gravity() {
+    
+    
+     static int count = 0;
+     
+     
+     if(count == 0) {
+         for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+             p->turnOff();
+         }   
+         
+         for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){ 
+             p->turnOff();
+         }   
+         
+         mBackboneBond.turnOff();
+         
+         count = 1;
+         mPhysics.setGravity(Vec3f(0, 3, 0));
+     }
+     else {
+         for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+             p->turnOn();
+         }   
+         
+         for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){ 
+             p->turnOn();
+         }   
+         
+         mBackboneBond.turnOn();
+         
+         count = 0;
+         mPhysics.setGravity(Vec3f(0, 0, 0));
+     }
+}
+
 //RENAME
 void Character::test() {
     
-    static int count = 0;
     
-    
-    if(count == 0) {
-//        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
-//            p->turnOff();
-//        }   
-        count = 1;
-        mPhysics.setGravity(Vec3f(0, 3, 0));
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
+        
+        if( p->mLevel == CPL_FEELER && p->mFunction == CPF_STAND ) {
+            
+            p->setFixed();
+            
+            ci::Vec3f pos = p->getPosition();
+            
+            pos.y = 200.0f;
+            
+            p->moveTo(pos);
+            
+            int id = p->getStandBondID();
+            mStandBonds[id].setBondLength(mStandBonds[id].mSaveMaxLength);
+            
+        }
     }
-    else {
-//        for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
-//            p->turnOn();
-//        }   
-        count = 0;
-        mPhysics.setGravity(Vec3f(0, 0, 0));
-    }
+
 }
 
 //////////////////////////////////////////////
 // UPDATE FUNCTIONS //////////////////////////
 //////////////////////////////////////////////
+
+
+void Character::updateRootSpline() {
+    
+    vector<Vec3f> newPoints;
+    for( int u = 0; u < mRootPath.size(); u++ ) {
+        newPoints.push_back( mRootPath[u]->getPosition() );
+    }
+    
+    mCharacterRoot.update( newPoints );
+    
+}
 
 void Character::updateSplines() {
     
@@ -602,7 +743,9 @@ void Character::update() {
     if(!mDrawCharacter) {
         
         //Splines Update
+        updateRootSpline();
         updateSplines();
+        
         
     }
     
@@ -713,23 +856,33 @@ void Character::draw() {
         
                 for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
                            
-                    if(p->getEndOfLine()) {
-                        gl::color(0.5,0.5,1);
-                        p->render();
-                    }
-                    else {
-                        gl::color(1,1,0);
-                        p->render();
-                    }
+                    if( p->mLevel == CPL_ROOT ) { gl::color(1,1,0); }
+                    else if(p->mLevel == CPL_JOINT ) { gl::color(1,0,0); }
+                    else { gl::color(0.5,0.5,1); }
+                    
+                    p->render();
                 }
             }
     
             //Draw Bonds
             if(mDrawCharacter) {
                 for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){
+                    
+                    gl::color(1,0.5,0);
                     p->render();
                 }   
+                
+                for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){
+                    gl::color(0.0,0.5,1);
+                    p->render();
+                }
+                
+                
+                
             }
+    
+    
+    
     
             //Draw EmoAttractors
             //mFrustrationAtt.render();
@@ -772,11 +925,13 @@ void Character::draw() {
 //                }
                  
                 
-//                for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
-//                    p->drawFrameSlices( 2.25f );
-//                    p->drawFrames( 1.5f );
-//                    p->drawParticle();
-//                }
+                for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
+                    p->drawFrameSlices( 2.25f );
+                    p->drawFrames( 1.5f );
+                }
+                
+                mCharacterRoot.drawFrames( 1.5f * 2 );
+                mCharacterRoot.drawFrameSlices( 2.25f * 2 );
                 
                 
                 glEnable( GL_TEXTURE_2D );
@@ -788,7 +943,7 @@ void Character::draw() {
                 mParticleTexture.bind();
                  
                 for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
-                    p->drawParticle();
+                    //p->drawParticle();
                 }
                 
                 mParticleTexture.unbind();

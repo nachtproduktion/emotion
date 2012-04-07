@@ -14,6 +14,7 @@
 class CharacterSpline {
     public:
     
+        CharacterSpline();
         CharacterSpline( std::vector<ci::Vec3f> _pointList );
     
         void createParticleController();
@@ -22,6 +23,9 @@ class CharacterSpline {
         void buildVectors();
         void buildPTF();
         
+        void setRoot( bool _r = false );
+        bool getRoot();
+    
         void update( std::vector<ci::Vec3f> _pointList );
         void updateParticle();
     
@@ -31,8 +35,10 @@ class CharacterSpline {
         void drawFrameSlices( float scale = 1.0f );
        
             
-    private:
+    private:  
     
+        bool                                mRoot;
+        
         int                                 mNumSegs;                
     
         ci::BSpline3f                       mSpline;

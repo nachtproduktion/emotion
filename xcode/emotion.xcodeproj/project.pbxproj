@@ -93,6 +93,7 @@
 		23EB8A8315191D8100CC3D2D /* ParticleController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParticleController.h; path = ../include/ParticleController.h; sourceTree = "<group>"; };
 		23ED3CC2152BC44E009CD4C5 /* Resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
 		23ED3CC3152BC720009CD4C5 /* particle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = particle.png; path = ../resources/particle.png; sourceTree = "<group>"; };
+		23F8C6541530933D00AFD80A /* Constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Constants.h; path = ../include/Constants.h; sourceTree = "<group>"; };
 		23F904AF150BE0330040F1A3 /* Particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Particle.h; path = ../include/Particle.h; sourceTree = "<group>"; };
 		23F904B1150BE0370040F1A3 /* Particle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Particle.cpp; path = ../src/Particle.cpp; sourceTree = "<group>"; };
 		23F904BA150BFA460040F1A3 /* Character.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Character.cpp; path = ../src/Character.cpp; sourceTree = "<group>"; };
@@ -291,6 +292,7 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				23F8C6541530933D00AFD80A /* Constants.h */,
 				23ED3CC2152BC44E009CD4C5 /* Resources.h */,
 				23D325C5151D3DE600563D81 /* InfoPanel.h */,
 				32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */,

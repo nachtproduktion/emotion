@@ -12,18 +12,20 @@ class Particle {
     
 	Particle( ci::Vec3f _pos, ci::Vec3f _vel );
     Particle( float _radius, ci::Vec3f _pos, float _theta, float _u );
-    Particle( ci::Matrix44f* _matrix, float _radius );
+    Particle( ci::Matrix44f* _matrix, float _radius, bool _statical = false );
         
+    void setVelocity( ci::Vec3f _mpoint );
+    
     void calcPosition();
     
     void findPerlin();
 	void findVelocity();
-    void setPosition();
+    
     void updatePosition( ci::Vec3f _pos );
     void update();
+    
 	void render();
     
-	
 	
     ci::Vec3f	mVelocity;
     ci::Vec3f   mPerlin;
@@ -48,6 +50,8 @@ private:
     ci::Vec3f                   mPositionOnCircle;
     float                       mCircleRadius;	
     ci::Matrix44f*              mControllerMatrix;
+    
+    bool                        mStatical;
     
 
     

@@ -40,3 +40,63 @@ void updateAttractors() {
  for(int i=0; i<physics.numberOfAttractions(); i++) physics.getAttraction(i)->kill();
  }
  */
+
+//void Character::createParticleController() {
+    
+    //Kreise an Splines
+    
+    
+    //    
+    //    
+    //    int numSegments = 50;
+    //    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){  
+    //        for( int s = 0; s <= numSegments; ++s ) {
+    //            float t = s / (float)numSegments;
+    //            mParticleController.push_back( ParticleController( ) );
+    //            mParticleController.back().mPosition = p->getPosition( t );
+    //            
+    //            
+    //            float sradius = niko::mapping(s, 0, numSegments, 10.0f, 20.0f);
+    //            sradius = Rand::randFloat(sradius-2, sradius+2);
+    //            
+    //            
+    //            mParticleController.back().setCircle( sradius );
+    //        }
+    //    }
+    
+    
+    
+    
+    //Kugeln an Splines
+    //    int numSegments = 20;
+    //    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){  
+    //        for( int s = 0; s <= numSegments; ++s ) {
+    //            float t = s / (float)numSegments;
+    //            mParticleController.push_back( ParticleController( ) );
+    //            mParticleController.back().mPosition = p->getPosition( t );
+    //            
+    //            
+    //            float sradius = niko::mapping(s, 0, 18, 20.0f, 10.0f);
+    //            sradius = Rand::randFloat(sradius-5, sradius+5);
+    //            if(s > 17) sradius = 2.0f;
+    //            
+    //            
+    //            mParticleController.back().setSphere( sradius );
+    //        }
+    //    }
+    
+    
+    //Kugeln an Knotenpunkten
+    //    int counter = 0;
+    //     
+    //    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){  
+    //        
+    //        mParticleController.push_back( ParticleController( ) );
+    //        mParticleController.back().mPosition = p->getPosition();
+    //        mParticleController.back().setSphere( p->getShellRadius() );
+    //        p->setParticleControllerID( counter );
+    //        counter++;
+    //
+    //    }
+    
+//}

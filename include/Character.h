@@ -28,21 +28,13 @@
 #include "CharacterSpline.h"
 #include "CharacterMovement.h"
 
+#include "Constants.h"
+
 using namespace ci;
 using namespace ci::app;
 using namespace std;
 using namespace MSA;
 
-//PHYSICS
-#define	SPRING_STRENGTH         0.01f
-#define BOUNCE                  0.2f
-
-#define	GRAVITY					0.0f
-#define FORCE_AMOUNT			10.0f
-
-#define SECTOR_COUNT			1		// currently there is a bug at sector borders
-
-#define CENTER                  ci::Vec3f::zero()
 
 extern int fps;
 
@@ -52,12 +44,17 @@ class Character {
     Character( ci::Vec3f _pos, float _radius, Quatf _rotation );
     
     void createNewStructure( int _num );
-    void mkPoint(CharacterPoint *lastPoint, int _level);
+    void createCharacter();
+    void setProperties( CharacterPoint *_point, int _typ );
+    void setRelations( CharacterPoint *_parent, CharacterPoint *_child );
+    void setBonds( CharacterPoint *_parent, CharacterPoint *_child ); 
+    
     int  getRandPointNumber( int _min = 0, int _max = 4 );
     
     void createPhysics();
-    void createParticleController(); 
+    void createRootSpline();
     void createSplinesA();
+    
     void createSplinesB();
     void pathFinder( CharacterPoint *_lastPoint, int _childID, std::vector<CharacterPoint*> _path );
     int countEnds(); 
@@ -74,8 +71,10 @@ class Character {
     void sphere();
     //RENAME
     void test();
+    void gravity();
     void setNextBeat( time_t _bang );    
   
+    void updateRootSpline();
     void updateSplines();
     void updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement );
     void update();
@@ -87,8 +86,7 @@ class Character {
     bool        mDrawCharacter;
     
     float       mRadius;
-    int         mNumberOfCharacterPoints;
-    int         mCharacterPointsLeft;
+    int         mNumberOfRootPoints;
     bool        mOpenLines;
     int         mMaxLevels;
     
@@ -103,8 +101,9 @@ class Character {
     
     //Spline & Path
     std::vector< std::vector<CharacterPoint*> > mPaths;
-    //std::vector<BSpline3f>                      mSplines;
     std::vector<CharacterSpline>                mCharacterSplines;
+    std::vector<CharacterPoint*>                mRootPath;
+    CharacterSpline                             mCharacterRoot;
     
     //Particle
     std::vector<ParticleController>  mParticleController;
@@ -114,6 +113,8 @@ class Character {
     Physics::World3D        mPhysics;
     int                     mForceTimer;
     std::vector<Bond>       mBonds;
+    std::vector<Bond>       mStandBonds;
+    Bond                    mBackboneBond;
     
     //EmoAttractos
     EmoAttractor            mFrustrationAtt;

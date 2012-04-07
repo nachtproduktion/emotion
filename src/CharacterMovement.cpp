@@ -97,7 +97,7 @@ void CharacterMovement::moveOnSphere( float _angle, time_t _ms ) {
     float angleInRadiansZ = ci::toRadians( Rand::randFloat(_angle) );
     
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
-        if( p->getEndOfLine() ) {
+        if( p->getEndOfLine() && p->mFunction != CPF_STAND) {
              
             //zufall ziel
             p->savePosition = p->getPosition();
@@ -268,7 +268,7 @@ void CharacterMovement::_moveOnSphere() {
     if ( timeDelta <= 0 ) { 
         
         for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
-            if( p->getEndOfLine() ) {
+            if( p->getEndOfLine() && p->mFunction != CPF_STAND) {
                 p->moveTo( p->saveTarget );
             }
         }
@@ -280,7 +280,7 @@ void CharacterMovement::_moveOnSphere() {
     
     
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
-        if( p->getEndOfLine() ) {
+        if( p->getEndOfLine() && p->mFunction != CPF_STAND ) {
 
             float t = niko::mapping( timeDelta, 0, mTargetTimes[SPHERE] - mStartTimes[SPHERE], 1, 0, true);
             t = ci::easeInOutQuad( t ); 

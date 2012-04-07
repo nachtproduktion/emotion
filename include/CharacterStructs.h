@@ -12,10 +12,15 @@
 #include "niko_functionen.h"
 #include "CharacterPoint.h"
 
-#define	SPRING_STRENGTH         0.01f
-
+#include "Constants.h"
 
 struct Bond {
+
+    Bond() {
+        a = NULL;
+        b = NULL;
+        s = NULL;
+    }
     Bond( CharacterPoint * _particleA, CharacterPoint * _particleB ) {
         
         a = _particleA->getParticle();
@@ -59,7 +64,6 @@ struct Bond {
     }
     
     void render() {
-        gl::color(1,0.5,0);
         gl::drawLine(a->getPosition(), b->getPosition());
     }
     
@@ -67,6 +71,7 @@ struct Bond {
     float mStrength;
     float mSaveDistanceA;
     float mSaveDistanceB;
+    float mSaveMaxLength;
     MSA::Physics::Particle3D * a;
     MSA::Physics::Particle3D * b;
     MSA::Physics::Spring3D *s;

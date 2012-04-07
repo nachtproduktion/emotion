@@ -22,8 +22,6 @@ class CharacterPoint {
     public:
         CharacterPoint();
         CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, int _pID );
-        
-        void postSettings();
     
         void setParticle();
         Physics::Particle3D* getParticle();
@@ -45,6 +43,9 @@ class CharacterPoint {
         int getNumberOfBonds();
         int getBondID( int _index );
     
+        void setStandBondID( int _id );
+        int getStandBondID();
+    
         void setParticleControllerID( int _id );
         int getParticleControllerID();
         
@@ -60,6 +61,7 @@ class CharacterPoint {
         Vec3f getPosition();
         Vec3f* getPositionPointer();
     
+        void setEndOfLine( bool _eol );
         bool getEndOfLine();
         bool getActive();
     
@@ -78,6 +80,7 @@ class CharacterPoint {
     
     
         int   mLevel;
+        int   mFunction;
     
     private:
     
@@ -90,6 +93,7 @@ class CharacterPoint {
         bool                    mActive;
         int                     mParticleControllerID;
         std::vector <int>       mBondIDs;
+        int                     mStandBondID;
     
         float                   mShellRadius;
     

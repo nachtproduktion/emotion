@@ -56,10 +56,12 @@ Particle::Particle( float _radius, ci::Vec3f _pos, float _theta, float _u ) {
     
 }
 
-Particle::Particle( ci::Matrix44f* _matrix, float _radius ) {
+Particle::Particle( ci::Matrix44f* _matrix, float _radius, bool _statical ) {
     
     mControllerMatrix   = _matrix;
     mCircleRadius       = _radius;
+    
+    mStatical           = _statical;
     
     float randAngle     = Rand::randFloat(0.0,6.28318531f);
     mPositionOnCircle   = ci::Vec3f( cos( randAngle )*mCircleRadius, sin( randAngle )*mCircleRadius, 0 );
@@ -67,16 +69,23 @@ Particle::Particle( ci::Matrix44f* _matrix, float _radius ) {
 
     calcPosition();
     
-    mPerlin         = Vec3f::zero();
+    mVelocity       = ci::Vec3f(0,1,0);// + Rand::randVec3f() * 0.02;
+    
+    mPerlin         = ci::Vec3f::zero();
 	
-	mRadius			= Rand::randFloat( 0.5f, 1.0f );
+	mRadius			= Rand::randFloat( 1.5f, 2.0f );
     
 	mIsDead			= false;
 	mAge			= 0.0f;
-	mLifeSpan		= Rand::randFloat( 80.0f, 100.0f );
+	mLifeSpan		= Rand::randFloat( 180.0f, 200.0f );
 	
     mColor          = ColorA(1.0f,1.0f,1.0f,1.0f);
     
+}
+
+void Particle::setVelocity( ci::Vec3f _mpoint ) {
+    mVelocity = _mpoint - mPosition;
+    //mVelocity.normalize();
 }
 
 void Particle::calcPosition() {
@@ -100,30 +109,31 @@ void Particle::findPerlin()
 
 void Particle::findVelocity()
 {
-
 	mVelocity += mPerlin;
-    
-}
-
-void Particle::setPosition() {
-    mPosition += mVelocity * 0.5;
+    mPosition += mVelocity * 0.2;
 }
 
 	
 void Particle::update()
 {
+    if(mStatical) {
+        calcPosition();
+    } else {
+        findPerlin();
+        findVelocity();
+        
+        //AGING
+        mAge ++;
+        mColor.a = niko::mapping(mAge, 0, mLifeSpan, 1.0, 0.0, true);
+        
+        if( mAge > mLifeSpan ){
+            mIsDead = true;
+        }
+    }
     
-    calcPosition();
+
     
-    
-    
-    //AGING
-	mAge ++;
-    mColor.a = niko::mapping(mAge, 0, mLifeSpan, 1.0, 0.0, true);
-    
-	if( mAge > mLifeSpan ){
-		mIsDead = true;
-	}
+
     
     /*
     if(mSphere) {
@@ -168,21 +178,5 @@ void Particle::update()
 void Particle::render()
 {
     gl::color( mColor );
-
     gl::drawBillboard(mPosition, Vec2f(mRadius,mRadius), 0.0, br, bup);
-    
-    /*
-    glTexCoord2f( 0, 0 );
-	glVertex3f( mPosition.x - mRadius, mPosition.y - mRadius, mPosition.z );
-	
-	glTexCoord2f( 1, 0 );
-	glVertex3f( mPosition.x + mRadius, mPosition.y - mRadius, mPosition.z );
-	
-	glTexCoord2f( 1, 1 );
-	glVertex3f( mPosition.x + mRadius, mPosition.y + mRadius, mPosition.z );
-	
-	glTexCoord2f( 0, 1 );
-	glVertex3f( mPosition.x - mRadius, mPosition.y + mRadius, mPosition.z );
-   */
-	//gl::drawSphere( mPosition, mRadius );
 }

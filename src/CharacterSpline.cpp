@@ -9,12 +9,17 @@
 #include "CharacterSpline.h"
 #include "cinder/gl/gl.h"
 
+CharacterSpline::CharacterSpline() {
+    mNumSegs    = 50;
+    mRoot       = false;
+}
+
 CharacterSpline::CharacterSpline( std::vector<ci::Vec3f> _pointList ) {
     
     //Create Spline:
     mSpline = BSpline3f(_pointList, _pointList.size()-1, false, true);
     
-    mNumSegs    = 20;
+    mNumSegs    = 50;
     
     //Create ParticleController
     createParticleController();
@@ -22,20 +27,17 @@ CharacterSpline::CharacterSpline( std::vector<ci::Vec3f> _pointList ) {
     //Circle profile - radius - segments
 //    makeCircleProfile( mProf, 5.0f, 16 );
     
-    //SetParticleController Profile
-    for( int i = 0; i < mNumSegs; ++i ) {	
-        mParticleController[i].setCircleRadius( 5.0f );          
-    }    
+    mRoot = false;
     
 }
-
 
 void CharacterSpline::createParticleController() {
     
     mParticleController.clear();
     
     for( int i = 0; i < mNumSegs; ++i ) {	
-        mParticleController.push_back( ParticleController() );            
+        mParticleController.push_back( ParticleController() ); 
+        mParticleController.back().setCircleRadius( 10 + 1.5 * i );
     }
     
 }
@@ -89,6 +91,14 @@ void CharacterSpline::buildPTF() {
 	}
 }
 
+void CharacterSpline::setRoot( bool _r ) {
+    mRoot = _r;
+}
+
+bool CharacterSpline::getRoot() {
+    return mRoot;
+}
+
 void CharacterSpline::update( std::vector<ci::Vec3f> _pointList ) { 
     
     mSpline = BSpline3f(_pointList, _pointList.size()-1, false, true);
@@ -105,8 +115,10 @@ void CharacterSpline::updateParticle() {
 
     for( int i = 0; i < mNumSegs; ++i ) {
         mParticleController[i].updateMatrix( mFrames[i] );
-        mParticleController[i].update();
+        mParticleController[i].update( mPs[mNumSegs] );
     }
+    
+    
 
 }
 

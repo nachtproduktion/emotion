@@ -25,10 +25,10 @@ class ParticleController {
         
         void setCircleRadius( float _radius );
     
-        void addParticles( int _number );
+        void addParticles( int _number, bool _statical = false );
     
         void updateMatrix( ci::Matrix44f _matrix );
-        void update();
+        void update( ci::Vec3f _mpoint );
     
         void render();
     

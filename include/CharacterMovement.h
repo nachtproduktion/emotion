@@ -12,6 +12,7 @@
 #include "CharacterStructs.h"
 #include "CharacterPoint.h"
 
+#include "Constants.h"
 #define MOVEMENTS 5
 
 extern int fps;

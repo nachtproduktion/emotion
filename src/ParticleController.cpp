@@ -15,10 +15,10 @@ void ParticleController::setCircleRadius( float _radius ) {
     
 }
 
-void ParticleController::addParticles( int _number ) {
+void ParticleController::addParticles( int _number, bool _statical ) {
     
     for(int i = 0; i < _number; i++) {             
-            mParticles.push_back( Particle( &mMatrix, mCircleRadius ) );
+            mParticles.push_back( Particle( &mMatrix, mCircleRadius, _statical ) );
     }     
     
 }
@@ -29,16 +29,17 @@ void ParticleController::updateMatrix( ci::Matrix44f _matrix ) {
     
 }
 
-void ParticleController::update() {
+void ParticleController::update( ci::Vec3f _mpoint ) {
     
     
-    if(mParticles.size() == 0 ) addParticles( 20 );
+    if(mParticles.size() == 0 ) addParticles( mCircleRadius*2, true );
     
-    addParticles( Rand::randInt(2) );
+    //addParticles( Rand::randInt(2) );
     
     for( list<Particle>::iterator p = mParticles.begin(); p != mParticles.end(); ){
         
         if( ! p->mIsDead ) {
+            p->setVelocity( _mpoint );
 			p->update();
 			++p;
 		}
