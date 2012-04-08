@@ -70,9 +70,9 @@ void Character::createNewStructure(int _num) {
     mMovement.setup( &mCharacterPoints, &mBonds );
     
     //Create EmoAttractors
-    mFrustrationAtt.create(&mPhysics, mRadius, CENTER);
+    mFrustrationAtt.create(&mPhysics, mRadius, CENTER_POS);
     mFrustrationAtt.setFrustration();
-    mEngagementAtt.create(&mPhysics, mRadius, CENTER);
+    mEngagementAtt.create(&mPhysics, mRadius, CENTER_POS);
     mEngagementAtt.setEngagement();
     
     //create pathes for splines
@@ -143,7 +143,7 @@ void Character::createCharacter() {
     
     //BUILD CHARACTER
     CharacterPoint *pRootPoint = NULL;
-    ci::Vec3f position = CENTER;
+    ci::Vec3f position = CENTER_POS;
 
     //backbone
     CharacterPoint *pBackboneTop = NULL;
@@ -552,8 +552,8 @@ void Character::scale( float _s ) {
         p->mSaveDistanceA *= _s;    
     } 
     
-    mFrustrationAtt.changeWorld( CENTER, mRadius );
-    mEngagementAtt.changeWorld( CENTER, mRadius );
+    mFrustrationAtt.changeWorld( CENTER_POS, mRadius );
+    mEngagementAtt.changeWorld( CENTER_POS, mRadius );
     
 }
 
@@ -926,12 +926,14 @@ void Character::draw() {
                  
                 
                 for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
-                    p->drawFrameSlices( 2.25f );
-                    p->drawFrames( 1.5f );
+                    //p->drawFrameSlices( 2.25f );
+                    //p->drawFrames( 1.5f );
+                    p->drawVBO();
                 }
                 
-                mCharacterRoot.drawFrames( 1.5f * 2 );
-                mCharacterRoot.drawFrameSlices( 2.25f * 2 );
+                //mCharacterRoot.drawFrames( 1.5f * 2 );
+                //mCharacterRoot.drawFrameSlices( 2.25f * 2 );
+                mCharacterRoot.drawVBO();
                 
                 
                 glEnable( GL_TEXTURE_2D );
@@ -945,6 +947,8 @@ void Character::draw() {
                 for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
                     //p->drawParticle();
                 }
+                
+                //mCharacterRoot.drawParticle();
                 
                 mParticleTexture.unbind();
                 

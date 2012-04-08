@@ -5,6 +5,8 @@
 #include "cinder/Matrix.h"
 #include "cinder/Rand.h"
 #include "cinder/Vector.h"
+#include "cinder/gl/gl.h"
+#include "cinder/gl/Vbo.h"
 
 #include <vector>
 
@@ -17,8 +19,9 @@ class CharacterSpline {
         CharacterSpline();
         CharacterSpline( std::vector<ci::Vec3f> _pointList );
     
+        void createVBO();
         void createParticleController();
-//        void makeCircleProfile( std::vector<ci::Vec3f>& prof, float rad = 5.25f, int segments = 16 );
+        void makeCircleProfile( std::vector<ci::Vec3f>& prof, float rad = 5.25f, int segments = 16 );
     
         void buildVectors();
         void buildPTF();
@@ -28,6 +31,10 @@ class CharacterSpline {
     
         void update( std::vector<ci::Vec3f> _pointList );
         void updateParticle();
+    
+        void updateVBO();
+        void drawVBO();
+        
     
         void drawParticle();
         
@@ -49,6 +56,8 @@ class CharacterSpline {
         std::vector<ci::Matrix44f>          mFrames;		// Coordinate frame at each b-spline sample
     
         std::vector<ParticleController>     mParticleController;
+    
+        gl::VboMesh                         mVboMesh;
 };
 
 #endif

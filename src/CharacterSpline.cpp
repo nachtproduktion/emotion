@@ -10,7 +10,7 @@
 #include "cinder/gl/gl.h"
 
 CharacterSpline::CharacterSpline() {
-    mNumSegs    = 50;
+    mNumSegs    = 30;
     mRoot       = false;
 }
 
@@ -19,15 +19,69 @@ CharacterSpline::CharacterSpline( std::vector<ci::Vec3f> _pointList ) {
     //Create Spline:
     mSpline = BSpline3f(_pointList, _pointList.size()-1, false, true);
     
-    mNumSegs    = 50;
+    mNumSegs    = 30;
+    
+    buildVectors();
+    buildPTF();
+    
+    
     
     //Create ParticleController
-    createParticleController();
+    //createParticleController();
     
     //Circle profile - radius - segments
-//    makeCircleProfile( mProf, 5.0f, 16 );
+    makeCircleProfile( mProf, 5.0f, 16 );
+    
+    //VBO MESH
+    createVBO();
     
     mRoot = false;
+    
+}
+
+void CharacterSpline::createVBO() {
+    
+    int vertices_X = mNumSegs;
+    int vertices_Z = 16;
+    
+    // setup the parameters of the Vbo
+	int totalVertices = vertices_X * vertices_Z;
+	int totalQuads = ( vertices_X - 1 ) * ( vertices_Z );
+	gl::VboMesh::Layout layout;
+	layout.setStaticIndices();
+	layout.setDynamicPositions();
+	layout.setStaticTexCoords2d();
+	mVboMesh = gl::VboMesh( totalVertices, totalQuads * 4, layout, GL_QUADS );
+	
+	// buffer our static data - the texcoords and the indices
+	vector<uint32_t> indices;
+	vector<Vec2f> texCoords;
+	for( int x = 0; x < vertices_X; ++x ) {
+		for( int z = 0; z < vertices_Z; ++z ) {
+			// create a quad for each vertex, except for along the bottom and right edges
+			if( ( x + 1 < vertices_X ) && ( z + 1 < vertices_Z ) ) {
+				indices.push_back( (x+0) * vertices_Z + (z+0) );
+				indices.push_back( (x+1) * vertices_Z + (z+0) );
+				indices.push_back( (x+1) * vertices_Z + (z+1) );
+				indices.push_back( (x+0) * vertices_Z + (z+1) );
+			}
+            
+            if( z + 1 == vertices_Z ) {
+                indices.push_back( (x+0) * vertices_Z + (z+0) );
+				indices.push_back( (x+1) * vertices_Z + (z+0) );
+				indices.push_back( (x+1) * vertices_Z + (0) );
+				indices.push_back( (x+0) * vertices_Z + (0) );
+            }
+			// the texture coordinates are mapped to [0,1.0)
+			texCoords.push_back( Vec2f( x / (float)vertices_X, z / (float)vertices_Z ) );
+		}
+        
+        
+	}
+	
+	mVboMesh.bufferIndices( indices );
+	mVboMesh.bufferTexCoords2d( 0, texCoords );
+    
     
 }
 
@@ -37,21 +91,25 @@ void CharacterSpline::createParticleController() {
     
     for( int i = 0; i < mNumSegs; ++i ) {	
         mParticleController.push_back( ParticleController() ); 
-        mParticleController.back().setCircleRadius( 10 + 1.5 * i );
+        
+        float radius = 5 + 0.5 * i;
+        if(mRoot) radius = 20;
+        
+        mParticleController.back().setCircleRadius( radius );
     }
     
 }
 
-//void CharacterSpline::makeCircleProfile( std::vector<ci::Vec3f>& prof, float rad, int segments )
-//{
-//	prof.clear();
-//	float dt = 6.28318531f/(float)segments;
-//	for( int i = 0; i < segments; ++i ) {
-//		float t = i*dt;
-//		prof.push_back( ci::Vec3f( cos( t )*rad, sin( t )*rad, 0 ) );
-//	}
-//    
-//}
+void CharacterSpline::makeCircleProfile( std::vector<ci::Vec3f>& prof, float rad, int segments )
+{
+	prof.clear();
+	float dt = 6.28318531f/(float)segments;
+	for( int i = 0; i < segments; ++i ) {
+		float t = i*dt;
+		prof.push_back( ci::Vec3f( cos( t )*rad, sin( t )*rad, 0 ) );
+	}
+    
+}
 
 void CharacterSpline::buildVectors() {
    
@@ -92,7 +150,9 @@ void CharacterSpline::buildPTF() {
 }
 
 void CharacterSpline::setRoot( bool _r ) {
+   // mNumSegs = 50;
     mRoot = _r;
+    makeCircleProfile( mProf, 25.0f, 16 );
 }
 
 bool CharacterSpline::getRoot() {
@@ -106,7 +166,8 @@ void CharacterSpline::update( std::vector<ci::Vec3f> _pointList ) {
     buildVectors();
     buildPTF();
     
-    updateParticle();
+    updateVBO();
+    //updateParticle();
     
 }	
 
@@ -118,8 +179,32 @@ void CharacterSpline::updateParticle() {
         mParticleController[i].update( mPs[mNumSegs] );
     }
     
-    
+}
 
+void CharacterSpline::updateVBO() {
+    
+    int vertices_X = mNumSegs;
+    int vertices_Z = 16;
+    
+	// dynmaically generate our new positions
+	gl::VboMesh::VertexIter iter = mVboMesh.mapVertexBuffer();
+	for( int x = 0; x < vertices_X; ++x ) {
+        
+        Matrix44f mat = mFrames[x];
+        
+		for( int z = 0; z < vertices_Z; ++z ) {
+            
+            Vec3f P = mat*(mProf[z]);
+			iter.setPosition( P );
+			++iter;
+		}
+	}
+
+}
+
+void CharacterSpline::drawVBO() {
+    gl::disableDepthRead();
+    gl::draw( mVboMesh );
 }
 
 void CharacterSpline::drawParticle() {

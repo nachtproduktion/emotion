@@ -7,7 +7,7 @@
 
 #define SECTOR_COUNT			1		// currently there is a bug at sector borders
 
-#define CENTER                  ci::Vec3f::zero()
+#define CENTER_POS              ci::Vec3f::zero()
 
 
 //Character Point Level
