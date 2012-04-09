@@ -42,7 +42,6 @@ Character::Character( ci::Vec3f _pos, float _radius, Quatf _rotation )
     mNextBeat = niko::getTimeMS();
     
     mDrawCharacter = true;
-
 }
 
 //////////////////////////////////////////////
@@ -65,21 +64,26 @@ void Character::createNewStructure(int _num) {
     mNumberOfRootPoints = _num;
     
     createCharacter();
-        
+    
+    //create pathes for splines
+    createBackbone();
+    createSplinesA();
+    //createSplinesB();
+    
+    
     //Create Charactermovement
     mMovement.setup( &mCharacterPoints, &mBonds );
+    mMovement.setStandBond( &mStandBonds );
+    mMovement.setBackboneBond( &mBackboneBond );
+    mMovement.setPhysics( &mPhysics );
+    mMovement.initStandUp();
     
     //Create EmoAttractors
-    mFrustrationAtt.create(&mPhysics, mRadius, CENTER_POS);
+    mFrustrationAtt.create(&mPhysics, mRadius,  CENTER_POS);
     mFrustrationAtt.setFrustration();
     mEngagementAtt.create(&mPhysics, mRadius, CENTER_POS);
     mEngagementAtt.setEngagement();
     
-    //create pathes for splines
-    createRootSpline();
-    createSplinesA();
-    //createSplinesB();
-        
     //Textures
     mParticleTexture	= gl::Texture( loadImage( loadResource( RES_PARTICLE ) ) );
     
@@ -124,6 +128,9 @@ void Character::createCharacter() {
             int feelerPoints = getRandPointNumber( 0, 5 );
             if( a == 0 || a == rootPoints-1 ) {
                feelerPoints = getRandPointNumber( 1, 5 ); 
+            } else {
+                //Spacer
+                PointCounter++;
             }
             
             jointFeelerSize.push_back( feelerPoints );
@@ -144,10 +151,10 @@ void Character::createCharacter() {
     //BUILD CHARACTER
     CharacterPoint *pRootPoint = NULL;
     ci::Vec3f position = CENTER_POS;
-
+    
     //backbone
-    CharacterPoint *pBackboneTop = NULL;
-    CharacterPoint *pBackboneBottom = NULL;
+    CharacterPoint * pBackboneTop = NULL;
+    CharacterPoint * pBackboneBottom = NULL;
     
     //ROOT POINTS
     for( int a = 0; a < CharacterVector.size(); a++ ) {
@@ -186,8 +193,30 @@ void Character::createCharacter() {
             
             position = pRootPoint->getPosition();
             
-            float twopi = 6.28318531f;
-            float angle = twopi/CharacterVector[a].size()*b;
+            CharacterPoint * pSpacerPoint = pRootPoint;
+            
+            float angle = (TWOPI / CharacterVector[a].size()) * b;
+            
+            //SPACER POINT
+            if( pRootPoint->mFunction == CPF_MIDDLE ) {
+                float radius = pRootPoint->getShellRadius();
+                position += ci::Vec3f( cos( angle )*radius, 0, sin( angle )*radius );
+                
+                mCharacterPoints.push_back( CharacterPoint( position, &mPhysics, mCharacterPoints.size() ) );
+                mCharacterPoints.back().mLevel = CPL_ROOT;
+                mCharacterPoints.back().mFunction = CPF_SPACER;
+                
+                pSpacerPoint = &mCharacterPoints.back();
+                
+                setRelations( pRootPoint , pSpacerPoint );
+                setBonds( pRootPoint , pSpacerPoint );
+                
+                //SPACER
+                pRootPoint->addSpacer( pSpacerPoint );
+                
+                //settings
+                setProperties(pSpacerPoint, CPL_ROOT);
+            }
             
             position   += ci::Vec3f( cos( angle )*jointDistance, 0, sin( angle )*jointDistance );
             
@@ -204,8 +233,10 @@ void Character::createCharacter() {
             
             pJointPoint = &mCharacterPoints.back();
             
-            setRelations( pRootPoint , pJointPoint );
-            setBonds( pRootPoint , pJointPoint );
+            
+            
+            setRelations( pSpacerPoint , pJointPoint );
+            setBonds( pSpacerPoint , pJointPoint );
             
             //settings
             setProperties(pJointPoint, pJointPoint->mLevel);
@@ -277,25 +308,30 @@ void Character::createCharacter() {
         }
     }
     
-
 }
 
 void Character::setProperties( CharacterPoint *_point, int _typ ) {
     
     switch ( _typ ) {
         case CPL_ROOT:
+            
+            if( _point->mFunction == CPF_SPACER ) {
+                _point->setRadius(3.0f);
+            } else {
+                _point->setRadius(12.0f);
+            }
+            
             _point->setMass(150.0f);
-            _point->setRadius(12.0f);
             _point->setEndOfLine(false);
             break;
         case CPL_JOINT:
             _point->setMass(20.0f);
-            _point->setRadius(8.0f);
+            _point->setRadius(4.0f);
             _point->setEndOfLine(false);
             break;
         case CPL_FEELER:
             _point->setMass(5.0f);
-            _point->setRadius(6.0f);
+            _point->setRadius(3.0f);
             _point->setEndOfLine(true);
             break;
     }
@@ -375,7 +411,7 @@ void Character::createPhysics() {
     
 }
 
-void Character::createRootSpline() {
+void Character::createBackbone() {
     
     mRootPath.clear();
     
@@ -384,14 +420,19 @@ void Character::createRootSpline() {
             
             CharacterPoint* lastPoint = &mCharacterPoints[z];
             while( lastPoint->mFunction != CPF_END ) {
-                mRootPath.push_back( lastPoint );
-                lastPoint = lastPoint->getParent();    
+                if( lastPoint->mFunction != CPF_SPACER ) {
+                    mRootPath.push_back( lastPoint );
+                    lastPoint = lastPoint->getParent();   
+                }
             }
             
             mRootPath.push_back( lastPoint );
             
         }
     }
+    
+    //
+    mBackbone.setPoints( mRootPath );
     
     //Make Root Spline
     vector<Vec3f> newPoints;
@@ -437,7 +478,7 @@ void Character::createSplinesA() {
         vector<Vec3f> newPoints;
         for( int u = 0; u < mPaths[i].size(); u++ ) {
             newPoints.push_back( mPaths[i][u]->getPosition() );
-        }
+        } 
         
         mCharacterSplines.push_back( CharacterSpline( newPoints ) );
     }
@@ -740,6 +781,8 @@ void Character::update() {
     //Movement Update
     mMovement.update();
     
+    mBackbone.update();
+    
     if(!mDrawCharacter) {
         
         //Splines Update
@@ -861,6 +904,7 @@ void Character::draw() {
                     else { gl::color(0.5,0.5,1); }
                     
                     p->render();
+                    
                 }
             }
     

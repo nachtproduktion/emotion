@@ -22,6 +22,10 @@ CharacterPoint::CharacterPoint() {
     
     mPosition = ci::Vec3f::zero();
     mShellRadius = 0.0f;
+    
+    mSpacers.clear();
+    mChilds.clear();
+    mBondIDs.clear();
 }
 
 CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, int _pID ) {
@@ -42,6 +46,10 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     
     mPosition      = _pos;
     
+    mSpacers.clear();
+    mChilds.clear();
+    mBondIDs.clear();
+    
     Physics::Particle3D* p = mPhysic->makeParticle(_pos);        
     p->setMass(4.0f)->setBounce(0.5f)->setRadius(5.0f)->enableCollision()->makeFree();
     
@@ -50,6 +58,8 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     
 }
 
+///////////////////////////////////
+//PARTICLES
 Physics::Particle3D* CharacterPoint::getParticle() {
     return mParticle;
 }
@@ -58,6 +68,8 @@ void CharacterPoint::setParticle() {
     mParticle = mPhysic->getParticle(mParticleID);
 }
 
+///////////////////////////////////
+//CHILDS AND PARENTS
 void CharacterPoint::setParent( CharacterPoint* _parent ) {
     mParent = _parent;
 }
@@ -86,21 +98,34 @@ int CharacterPoint::getNumberOfChilds() {
     return mChilds.size();
 }
 
-//void CharacterPoint::setNeighbours( CharacterPoint* _neighbour ) {
-//    
-//    mNeighbours.push_back( _neighbour );
-//    
-//}
-//
-//
-//int CharacterPoint::getNeighboursSize() {
-//    return mNeighbours.size();
-//}
+///////////////////////////////////
+//SPACER
+void CharacterPoint::addSpacer( CharacterPoint* _spacer ){
+    mSpacers.push_back( _spacer );
+}
 
+void CharacterPoint::clearSpacers(){
+    mSpacers.clear();
+}
+
+CharacterPoint* CharacterPoint::getSpacer( int _index ){
+    if(mSpacers.size() > _index) {
+        return mSpacers[ _index ]; 
+    }
+    else { return NULL; }
+}
+
+int CharacterPoint::getNumberOfSpacers() {
+    return mSpacers.size();
+}
+
+/////////////////////////////////////
 int CharacterPoint::getID() {
     return mParticleID;
 }
 
+///////////////////////////////////
+//BONDS
 void CharacterPoint::addBondID( int _id ) {
     mBondIDs.push_back( _id );
 }
@@ -124,6 +149,8 @@ int CharacterPoint::getStandBondID() {
     return mStandBondID;
 }
 
+///////////////////////////////////
+//PARTICLES
 void CharacterPoint::setParticleControllerID( int _id ) {
     mParticleControllerID = _id;
 }
@@ -137,6 +164,8 @@ void CharacterPoint::setRadius( float _r ) {
     calcShellRadius();
 }
 
+///////////////////////////////////
+//SETTINGS
 float CharacterPoint::getRadius() {
     return mParticle->getRadius();
 }
@@ -184,7 +213,7 @@ bool CharacterPoint::getActive() {
 }
 
 void CharacterPoint::calcShellRadius() {
-    mShellRadius = getRadius() * 4;
+    mShellRadius = getRadius() * 3;
 }
 
 float CharacterPoint::getShellRadius() {
@@ -199,5 +228,5 @@ void CharacterPoint::moveBy( Vec3f _dir ) {
 }
 
 void CharacterPoint::render() {
-    gl::drawSphere ( getPosition(), getRadius() );
+    gl::drawSphere ( getPosition(), getRadius() );   
 }

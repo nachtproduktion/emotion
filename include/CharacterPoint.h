@@ -15,6 +15,7 @@
 #include "MSAPhysics3D.h"
 
 #include "niko_functionen.h"
+#include "Constants.h"
 
 extern int fps;
 
@@ -33,11 +34,13 @@ class CharacterPoint {
         CharacterPoint* getParent();
         CharacterPoint* getChild( int _index );
         int getNumberOfChilds();
+
+        void addSpacer( CharacterPoint* _spacer );
+        void clearSpacers();
+        CharacterPoint* getSpacer( int _index );
+        int getNumberOfSpacers();
     
-//        void setNeighbours( CharacterPoint* _neighbour );
-//        int  getNeighboursSize();
         int getID();
-    
     
         void addBondID( int _id );
         int getNumberOfBonds();
@@ -72,8 +75,6 @@ class CharacterPoint {
         void moveBy( Vec3f _dir );
         
         void render();
-        
-//        std::vector<  CharacterPoint* > mNeighbours;
     
         Vec3f savePosition;
         Vec3f saveTarget;
@@ -86,6 +87,8 @@ class CharacterPoint {
     
         CharacterPoint *        mParent;
         std::vector<  CharacterPoint* > mChilds;
+    
+        std::vector<  CharacterPoint* > mSpacers;
     
         Vec3f                   mPosition;
     

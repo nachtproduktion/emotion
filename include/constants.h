@@ -34,6 +34,10 @@
 #define CPF_MIDDLE       0
 #define CPF_START        1
 #define CPF_END          2
+#define CPF_SPACER       3
 
 #define CPF_NORMAL       0
 #define CPF_STAND        1
+
+//MATH
+#define TWOPI            6.28318531f

@@ -82,6 +82,8 @@ void CharacterSpline::createVBO() {
 	mVboMesh.bufferIndices( indices );
 	mVboMesh.bufferTexCoords2d( 0, texCoords );
     
+    mVboMesh.unbindBuffers();
+    
     
 }
 
@@ -128,6 +130,14 @@ void CharacterSpline::buildVectors() {
 	}
 }
 
+void CharacterSpline::updateVectors() {
+
+	float dt = 1.0f/(float)mNumSegs;
+	for( int i = 0; i < mNumSegs; ++i ) {
+		float t = i*dt;
+        mSpline.get( t, &mPs[i], &mTs[i], 0, 0);
+	}
+}
 
 void CharacterSpline::buildPTF() {
 	mFrames.clear();
@@ -150,7 +160,6 @@ void CharacterSpline::buildPTF() {
 }
 
 void CharacterSpline::setRoot( bool _r ) {
-   // mNumSegs = 50;
     mRoot = _r;
     makeCircleProfile( mProf, 25.0f, 16 );
 }
@@ -163,9 +172,9 @@ void CharacterSpline::update( std::vector<ci::Vec3f> _pointList ) {
     
     mSpline = BSpline3f(_pointList, _pointList.size()-1, false, true);
     
-    buildVectors();
+    updateVectors();
     buildPTF();
-    
+
     updateVBO();
     //updateParticle();
     

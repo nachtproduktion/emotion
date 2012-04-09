@@ -52,7 +52,7 @@ class Character {
     int  getRandPointNumber( int _min = 0, int _max = 4 );
     
     void createPhysics();
-    void createRootSpline();
+    void createBackbone();
     void createSplinesA();
     
     void createSplinesB();
@@ -104,6 +104,8 @@ class Character {
     std::vector<CharacterSpline>                mCharacterSplines;
     std::vector<CharacterPoint*>                mRootPath;
     CharacterSpline                             mCharacterRoot;
+    
+    Backbone                                    mBackbone;
     
     //Particle
     std::vector<ParticleController>  mParticleController;

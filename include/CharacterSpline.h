@@ -24,6 +24,7 @@ class CharacterSpline {
         void makeCircleProfile( std::vector<ci::Vec3f>& prof, float rad = 5.25f, int segments = 16 );
     
         void buildVectors();
+        void updateVectors();
         void buildPTF();
         
         void setRoot( bool _r = false );

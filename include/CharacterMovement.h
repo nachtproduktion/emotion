@@ -22,14 +22,20 @@ class CharacterMovement {
 	CharacterMovement();
     void        setup(  std::vector<CharacterPoint> * _pCP,  std::vector<Bond> * _pBonds );
     
+    void        setPhysics( Physics::World3D* _p );
+    void        setStandBond( std::vector<Bond> * _pBonds );
+    void        setBackboneBond( Bond * _pBond );
+    
     void        wince( int _amount = 50, bool _soft = true );
     void        jump( time_t _ms, int _amount = 50 );
     void        moveOnSphere( float _angle = 90, time_t _ms = 0 );
     void        moveToCenter( time_t _ms = 0 );
     void        setBack( time_t _ms = 0 );
-    
+        
     void        update();
     
+    void        initStandUp();
+    void        standUp();
     
 private:
     
@@ -40,8 +46,14 @@ private:
     void        _moveToCenter();
     
     //VAR
-    std::vector<CharacterPoint> * mpCharacterPoints;
-    std::vector<Bond> * mpBonds;
+    MSA::Physics::World3D*          mPhysic;
+    MSA::Physics::Particle3D*       mStandUpPoint;
+    Bond                            mStandUpBond;
+    
+    std::vector<CharacterPoint> *   mpCharacterPoints;
+    std::vector<Bond> *             mpBonds;
+    std::vector<Bond> *             mpStandBonds;
+    Bond *                          mpBackboneBond;
     
     time_t      mStartTimes[MOVEMENTS];
     time_t      mTargetTimes[MOVEMENTS];

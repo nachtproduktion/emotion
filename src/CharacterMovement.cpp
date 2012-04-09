@@ -20,12 +20,80 @@ CharacterMovement::CharacterMovement() {
         mTargetTimes[i]     = 0;
         mActive[i]          = false;
     }
+    
+    mpBackboneBond = NULL;
+    mpCharacterPoints = NULL;
+    mpBonds = NULL;
+    mpStandBonds = NULL;
+    mPhysic = NULL;
+    mStandUpPoint = NULL;
 }
 
 void CharacterMovement::setup(  std::vector<CharacterPoint> * _pCP,  std::vector<Bond> * _pBonds ) {
     //Setze PointerVectoren
     mpCharacterPoints = _pCP;
     mpBonds = _pBonds;
+}
+
+void CharacterMovement::setPhysics( Physics::World3D* _p ) {
+    mPhysic = _p;
+}
+
+void CharacterMovement::setStandBond( std::vector<Bond> * _pBonds ) {
+    mpStandBonds = _pBonds;
+    
+}
+
+void CharacterMovement::setBackboneBond( Bond * _pBond ) {
+    mpBackboneBond = _pBond;
+}
+
+void CharacterMovement::initStandUp() {
+    if( mPhysic == NULL) { return; }
+    if( mpBackboneBond == NULL) { return; }
+        
+    ci::Vec3f pos = mpBackboneBond->b->getPosition();
+    pos.y = -300.0f;
+    
+    mStandUpPoint = mPhysic->makeParticle(pos);    
+    mStandUpPoint->makeOutside(true);
+    mStandUpPoint->setMass(50.0f)->setBounce(0.0f)->setRadius(5.0f)->makeFixed();
+    
+    
+    mStandUpBond = Bond( mStandUpPoint, mpBackboneBond->a );
+    mStandUpBond.makeBond(mPhysic);
+    mStandUpBond.turnOff();
+    mStandUpBond.mStrength = 0.5f;
+}
+
+void CharacterMovement::standUp() {
+    
+    if( mStandUpPoint == NULL ) {
+        initStandUp();
+        return;
+    }
+    
+    Vec3f pA = mpBackboneBond->a->getPosition();   // TOP
+    Vec3f pB = mpBackboneBond->b->getPosition();   // BOTTOM
+    
+    ci::Vec3f upPos = mStandUpPoint->getPosition();
+    //set new StandUpPoint Position
+    upPos.x = pB.x;
+    upPos.z = pB.z;
+    mStandUpPoint->moveTo(upPos);
+    
+    
+    float diff = (pA.y - pB.y) * -1;
+    float lnbb = mpBackboneBond->getBondLength();
+    if( lnbb * 0.8 > diff ) {
+        //zurück holen
+        mStandUpBond.setBondLength( upPos.distance(pB) - lnbb );
+        mStandUpBond.turnOn();
+    }
+    else  {
+        mStandUpBond.turnOff();
+    }
+    
 }
 
 void CharacterMovement::wince( int _amount, bool _soft ) {
@@ -171,6 +239,7 @@ void CharacterMovement::setBack( time_t _ms ) {
 
 void CharacterMovement::update() {
 
+    standUp();
     
     if( mActive[BACK] ) {
         setBack();
