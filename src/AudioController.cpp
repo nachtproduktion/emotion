@@ -24,14 +24,14 @@ void AudioController::makeStructure( int _index ) {
         
         for( int i = 0; i < mCharacterList.size(); i++ ) {
             mCharacterList[ i ]->createNewStructure();
-            mCharacterList[ i ]->startAnimation( niko::getTimeMS() + 200 );
+            mCharacterList[ i ]->startAnimation( niko::getTimeMS() + 500 );
         }
         
     }
     else {
         if( _index < mCharacterList.size() ) {
             mCharacterList[ _index ]->createNewStructure();
-            mCharacterList[ _index ]->startAnimation( niko::getTimeMS() + 200 );
+            mCharacterList[ _index ]->startAnimation( niko::getTimeMS() + 500 );
         }
     }
     
@@ -93,7 +93,6 @@ void AudioController::update() {
     
     //OSC UPDATE
     updateOSC();
-    
 }
 
 void AudioController::updateOSC() {
@@ -126,7 +125,7 @@ void AudioController::updateOSC() {
                 if (message.getArgType(i) == osc::TYPE_INT32){
                     try {
                         
-                        time_t nowA = niko::getTimeMS();
+                        time_t nowA = niko::getTimeMS() + mDelay;
                         PeakTimer newPeakA = PeakTimer(message.getArgAsInt32(i), nowA);
                         mFrequenz[adress].push_back(newPeakA);
                         
@@ -138,7 +137,7 @@ void AudioController::updateOSC() {
                 }else if (message.getArgType(i) == osc::TYPE_FLOAT){
                     try {
                         
-                        time_t nowB = niko::getTimeMS();
+                        time_t nowB = niko::getTimeMS() + mDelay;
                         PeakTimer newPeakB = PeakTimer(message.getArgAsFloat(i), nowB);
                         mFrequenz[adress].push_back(newPeakB);
                         

@@ -20,7 +20,9 @@ CharacterPoint::CharacterPoint() {
     
     savePosition = ci::Vec3f::zero();
     
-    mPosition = ci::Vec3f::zero();
+    mPosition   = ci::Vec3f::zero();
+    mAnimPos    = mPosition;
+    
     mShellRadius = 0.0f;
     
     mSpacers.clear();
@@ -42,9 +44,10 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     mParticleControllerID = -1;
     mStandBondID          = -1;
     
-    savePosition = _pos;
+    savePosition    = _pos;
     
-    mPosition      = _pos;
+    mPosition       = _pos;
+    mAnimPos        = mPosition;
     
     mSpacers.clear();
     mChilds.clear();
@@ -225,6 +228,15 @@ void CharacterPoint::moveTo( Vec3f _target ) {
 }
 void CharacterPoint::moveBy( Vec3f _dir ) {
     mParticle->moveBy( _dir );
+}
+
+void CharacterPoint::addAnimToPosition() {
+    Vec3f newPos = mParticle->getPosition() + mAnimPos;
+    mParticle->moveTo( newPos );
+}
+
+void CharacterPoint::posToSave() {
+    savePosition = mParticle->getPosition();
 }
 
 void CharacterPoint::render() {

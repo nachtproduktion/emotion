@@ -25,11 +25,7 @@ Character::Character()
     
     mDrawCharacter      = true;
     mAlive              = false;
-    
-    mWaitforBass        = false;
-    mWaitforMidlow      = false;
-    mWaitforMidHigh     = false;
-    mWaitforHigh        = false;
+
     
 }
 
@@ -46,11 +42,7 @@ Character::Character( ci::Vec3f _pos, float _radius, Quatf _rotation )
     
     mDrawCharacter      = true;
     mAlive              = false;
-    
-    mWaitforBass        = false;
-    mWaitforMidlow      = false;
-    mWaitforMidHigh     = false;
-    mWaitforHigh        = false;
+
 }
 
 //////////////////////////////////////////////
@@ -83,8 +75,9 @@ void Character::createNewStructure( int _num ) {
     //Create Charactermovement
     mMovement.setup( &mCharacterPoints, &mBonds );
     mMovement.setStandBond( &mStandBonds );
-    mMovement.setBackboneBond( mBackbone.getBond() );
+    mMovement.setBackbone( &mBackbone );
     mMovement.setPhysics( &mPhysics );
+    mMovement.initAttractorController();
     mMovement.initStandUp();
     
     //Create EmoAttractors
@@ -585,35 +578,36 @@ void Character::startAnimation( time_t _duration ) {
 }
 
 bool Character::waitforBass() {
-    return mWaitforBass;
+    return mMovement.getWaitfor(W_BASS);
 }
 
 void Character::inputBass( PeakTimer _pt ) {
-    
+    mMovement.bass( _pt );
 }
 
 bool Character::waitforMidlow() {
-    return mWaitforMidlow;
+    return mMovement.getWaitfor(W_MIDLOW);
 }
 
 void Character::inputMidlow( PeakTimer _pt ) {
-    
+    mMovement.midlow( _pt );
+    cout << "input: " << _pt.mPeak << " - " << _pt.mTime - niko::getTimeMS() << endl;
 }
 
 bool Character::waitforMidHigh() {
-    return mWaitforMidHigh;
+    return mMovement.getWaitfor(W_MIDHIGH);
 }
 
 void Character::inputMidhigh( PeakTimer _pt ) {
-    
+    mMovement.midhigh( _pt );
 }
 
 bool Character::waitforHigh() {
-    return mWaitforHigh;
+    return mMovement.getWaitfor(W_HIGH);
 }
 
 void Character::inputHigh( PeakTimer _pt ) {
-    
+    mMovement.high( _pt );
 }
 
 

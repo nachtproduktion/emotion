@@ -7,6 +7,7 @@
 #include "cinder/Sphere.h"
 #include "cinder/gl/gl.h"
 #include "cinder/Utilities.h"
+#include "cinder/Timeline.h"
 
 #include <list>
 #include <vector>
@@ -73,15 +74,20 @@ class CharacterPoint {
     
         void moveTo( Vec3f _target );
         void moveBy( Vec3f _dir );
-        
+    
+        void addAnimToPosition();
+        void posToSave();
+    
         void render();
+
     
         Vec3f savePosition;
         Vec3f saveTarget;
     
-    
         int   mLevel;
         int   mFunction;
+    
+        Anim<Vec3f>		mAnimPos;
     
     private:
     

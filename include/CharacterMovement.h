@@ -5,13 +5,17 @@
 #include "cinder/Vector.h"
 #include "cinder/Easing.h"
 #include "cinder/Perlin.h"
+#include "cinder/Timeline.h"
 
 #include <vector>
 
 #include "niko_functionen.h"
 #include "CharacterBond.h"
 #include "CharacterPoint.h"
+#include "AttractorController.h"
+#include "CharacterBackbone.h"
 
+#include "Structs.h"
 #include "Constants.h"
 #define MOVEMENTS 5
 
@@ -24,9 +28,23 @@ class CharacterMovement {
     
     void        setPhysics( Physics::World3D* _p );
     void        setStandBond( std::vector<Bond> * _pBonds );
-    void        setBackboneBond( Bond * _pBond );
+    void        setBackbone( Backbone * _pBackbone );
+    void        initAttractorController();
     
+    //start animation
     void        startAnimation( time_t _duration );
+    void        endOfStartAnimation();
+    
+    //audio Input
+    bool        getWaitfor( int _w );
+    
+    void        bass( PeakTimer _pt );
+    void        midlow( PeakTimer _pt );
+    void        midhigh( PeakTimer _pt );
+    void        high( PeakTimer _pt );
+    
+
+    
     
     void        wince( int _amount = 50, bool _soft = true );
     void        jump( time_t _ms, int _amount = 50 );
@@ -58,15 +76,20 @@ private:
     std::vector<Bond> *             mpBonds;
     std::vector<Bond> *             mpStandBonds;
     Bond *                          mpBackboneBond;
+    Backbone *                      mpBackbone;
+    
+    AttractorController             mAttractorController;
     
     time_t      mStartTimes[MOVEMENTS];
     time_t      mTargetTimes[MOVEMENTS];
     
     bool        mActive[MOVEMENTS];
     
-    int     mfuncfunc;
+    int         mfuncfunc;
     
     ci::Vec3f   mPerlin;
+    
+    bool        mDoMove;
     
 };
 

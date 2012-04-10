@@ -22,6 +22,9 @@ using namespace ci::app;
 using namespace std;
 
 int fps;
+float testwert;
+
+
 //Billboard
 ci::Vec3f bup;
 ci::Vec3f br;
@@ -95,6 +98,8 @@ void emotionApp::prepareSettings( Settings *settings )
 
 void emotionApp::setup()
 {
+    
+    testwert = 1.0f;
     
     // SETUP CAMERA
 	mCameraDistance = 500.0f;
@@ -185,7 +190,6 @@ void emotionApp::update()
     // EMOTION UPDATE
     checkEmotions();
     
-    
     if(mCharacter.mAlive) {
         updateCharacters();
     }
@@ -223,7 +227,6 @@ void emotionApp::updateCharacters() {
             mCharacter.inputHigh( pt );
         }
     }
-    
     
     mCharacter.move(mCharPosition, mArcball.getQuat());
     mCharacter.update();
@@ -335,7 +338,10 @@ void emotionApp::drawInfoPanel() {
 void emotionApp::keyDown( KeyEvent event )
 {
     switch(event.getChar()) {
-        case 'm': mCharacter.createNewStructure(); break;
+        case 'm': 
+            mCharacter.createNewStructure();
+            mCharacter.startAnimation( niko::getTimeMS() + 500 );
+        break;
         case 'f': mCharacter.addRandomForce(mFAmount); break;
         case 't': mCharacter.test(); break;
         case 'q': 
@@ -355,6 +361,8 @@ void emotionApp::keyDown( KeyEvent event )
             mCharacter.mDrawCharacter = !mCharacter.mDrawCharacter; 
             mCharacter.mBackbone.mDrawSpline = !mCharacter.mBackbone.mDrawSpline;
         break;
+        case '-': testwert -= 0.2; cout << testwert << endl; break;
+        case '+': testwert += 0.2; cout << testwert << endl; break;
     }
 
 }

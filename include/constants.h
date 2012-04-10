@@ -41,3 +41,11 @@
 
 //MATH
 #define TWOPI            6.28318531f
+
+//AUDIO
+
+#define W_COUNT         4
+#define W_BASS          0
+#define W_MIDLOW        1
+#define W_MIDHIGH       2
+#define W_HIGH          3

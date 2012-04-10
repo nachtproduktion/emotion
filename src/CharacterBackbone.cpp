@@ -35,6 +35,8 @@ void Backbone::makeBond() {
         mBackboneBond.makeBond( mPhysics );
     } 
     
+    mBottomPoint = pBackboneBottom;
+    
 }
 
 Bond* Backbone::getBond() {
@@ -69,6 +71,10 @@ CharacterSpline* Backbone::getSpline() {
     
     return &mSpline;
     
+}
+
+CharacterPoint* Backbone::getBottom() {
+    return mBottomPoint;
 }
 
 void Backbone::update() {

@@ -16,6 +16,12 @@ using namespace std;
 
 Perlin smPerlin( 2 );
 
+//GLOBAL FOR TIMELINE
+bool endStartAnimation;
+//AUDIO + TIMELINE
+bool mWaitfor[W_COUNT];
+
+
 CharacterMovement::CharacterMovement() {
     
     for( int i = 0; i < niko::getArrLength(mStartTimes); i++ ) {
@@ -30,8 +36,16 @@ CharacterMovement::CharacterMovement() {
     mpStandBonds = NULL;
     mPhysic = NULL;
     mStandUpPoint = NULL;
+    mpBackbone = NULL;
     
     mPerlin         = Vec3f::zero();
+    
+    for( int i = 0; i < W_COUNT; i++ ) {
+        mWaitfor[i] = false;
+    }
+    
+    endStartAnimation = false;
+    mDoMove        = false;
 }
 
 void CharacterMovement::setup(  std::vector<CharacterPoint> * _pCP,  std::vector<Bond> * _pBonds ) {
@@ -49,8 +63,13 @@ void CharacterMovement::setStandBond( std::vector<Bond> * _pBonds ) {
     
 }
 
-void CharacterMovement::setBackboneBond( Bond * _pBond ) {
-    mpBackboneBond = _pBond;
+void CharacterMovement::setBackbone( Backbone * _pBackbone ) {
+    mpBackbone      = _pBackbone;
+    mpBackboneBond  = _pBackbone->getBond();
+}
+
+void CharacterMovement::initAttractorController() {
+    mAttractorController.init( mPhysic, mpCharacterPoints);
 }
 
 void CharacterMovement::initStandUp() {
@@ -105,9 +124,158 @@ void CharacterMovement::standUp() {
 // MOVEMENTS ////////////////////////////////
 /////////////////////////////////////////////
 
+/////////////////////////////
+/// START ANIMATION /////////
+/////////////////////////////
+void sStartAnimation()
+{
+	endStartAnimation = true;
+}
+
+
 void CharacterMovement::startAnimation( time_t _duration ) {
     
+    if(mpBackboneBond == NULL || mpBonds == NULL || mpStandBonds == NULL) return;
+    
+    //Andere Bewegungen Stoppen
+    mDoMove = false;
+    
+    for( int i = 0; i < W_COUNT; i++ ) {
+        mWaitfor[i] = false;
+    }
+    
+    //Alle Punkte Trennen
+    for( int i = 0; i < mpBonds->size(); i++ ) {
+        mpBonds->at(i).turnOff();
+    }
+    
+    for( int i = 0; i < mpStandBonds->size(); i++ ) {
+        mpStandBonds->at(i).turnOff();
+    }
+    
+    mpBackboneBond->turnOff();
+    mStandUpBond.turnOff();
+    
+    //Zufallszeit bis zum erstellen
+    float randMS = Rand::randFloat( (_duration - niko::getTimeMS())/1.3, _duration - niko::getTimeMS() );
+    
+    //ZufallsPunkte im Raum + Gravity an
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
+        
+        if( p->getEndOfLine() && p->mFunction == CPF_STAND ) {
+        
+            Vec3f sp = p->getPosition();
+            sp.y = 200;
+            p->savePosition = sp;
+            
+        }
+        
+        //Rand Position
+        Vec3f randVec = Rand::randVec3f();
+        randVec.x *= Rand::randInt(0,1000);
+        randVec.z *= Rand::randInt(0,1000);
+        randVec.y *= Rand::randInt(0,200);
+        
+        p->moveTo( randVec );
+       
+    }
+        
+    //Make Attraction
+    mAttractorController.addStart();
+    mAttractorController.mStartAttractor.mMass = 2.0f;
+    
+    timeline().apply( &mAttractorController.mStartAttractor.mMass, 0.0f, randMS/1000, EaseInSine() )
+            .finishFn( sStartAnimation ); 
+    
 }
+
+void CharacterMovement::endOfStartAnimation() {
+    
+    mAttractorController.removeStart();
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
+        
+        if( p->getEndOfLine() && p->mFunction == CPF_STAND ) {
+            
+            p->moveTo( p->savePosition );
+            p->setFixed();
+            
+        }
+    }
+    
+    //Alle Punkte Verbinden
+    for( int i = 0; i < mpBonds->size(); i++ ) {
+        mpBonds->at(i).turnOn();
+    }
+    
+    for( int i = 0; i < mpStandBonds->size(); i++ ) {
+        mpStandBonds->at(i).turnOn();
+    }
+    
+    mpBackboneBond->turnOn();
+    mStandUpBond.turnOn();
+    
+    for( int i = 0; i < W_COUNT; i++ ) {
+        mWaitfor[i] = true;
+    }
+    
+}
+
+
+//////////////////////////////////
+/// AUDIO INPUT ANIMATION ////////
+//////////////////////////////////
+
+bool CharacterMovement::getWaitfor( int _w ) {
+    return mWaitfor[ _w ];
+}
+
+void CharacterMovement::bass( PeakTimer _pt ) {
+    mWaitfor[W_BASS] = false;
+    
+}
+
+void stopMidlow()
+{
+    mWaitfor[W_MIDLOW] = true;
+}
+
+void CharacterMovement::midlow( PeakTimer _pt ) {
+    mWaitfor[W_MIDLOW] = false;
+    
+    Vec3f randTarget = Rand::randVec3f();
+    randTarget.y = 0;
+    randTarget *= niko::mapping( _pt.mPeak, 0, 3, 5.0f, 10.0f);
+    
+    CharacterPoint * cpt = mpBackbone->getBottom();
+    cpt->posToSave();
+    cpt->mAnimPos = ci::Vec3f::zero();
+    
+    //Time Calc
+    float dur = _pt.mTime - niko::getTimeMS();
+    
+    timeline().apply( &cpt->mAnimPos, randTarget, dur/1000, EaseInOutBack() )
+                .finishFn( stopMidlow ); 
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
+        if( p->getEndOfLine() && p->mFunction == CPF_STAND ) {
+            p->setFree();
+        }
+    }
+}
+
+void CharacterMovement::midhigh( PeakTimer _pt ) {
+    mWaitfor[W_MIDHIGH] = false;
+    
+}
+
+void CharacterMovement::high( PeakTimer _pt ) {
+    mWaitfor[W_HIGH] = false;
+    
+}
+
+
+////////////////
 
 void CharacterMovement::wince( int _amount, bool _soft ) {
         
@@ -285,7 +453,25 @@ void CharacterMovement::bass( float _input ) {
 
 void CharacterMovement::update() {
 
+    //START ANIMATION
+    if( endStartAnimation == true ) {
+        endOfStartAnimation();
+        endStartAnimation = false;
+        mDoMove = true;
+    }
+    
     standUp();
+    mAttractorController.update();
+    
+    if( mDoMove == false ) { return; }
+    
+    
+    cout << mWaitfor[W_MIDLOW] << endl;
+    // BACKBONE MIDLOW UPDATE
+    if( mWaitfor[W_MIDLOW] == false ) {
+        CharacterPoint * cpt = mpBackbone->getBottom();
+        cpt->addAnimToPosition();
+    }
     
     if( mActive[BACK] ) {
         setBack();

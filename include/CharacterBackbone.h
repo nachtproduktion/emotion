@@ -34,6 +34,8 @@ class Backbone {
         void updateSpline();
         CharacterSpline* getSpline();
     
+        CharacterPoint* getBottom();
+    
         void update();
         void updateSpacers();
         void updatePositions(); 
@@ -43,6 +45,7 @@ class Backbone {
     
     private:
         std::vector < CharacterPoint* > mPoints;
+        CharacterPoint *                mBottomPoint;
     
         std::vector<Vec3f>		mPs;			// Points
         std::vector<Matrix44f>	mFrames;		// Coordinate frame

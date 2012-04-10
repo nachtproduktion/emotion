@@ -103,12 +103,6 @@ class Character {
     
     void draw();
     
-    //AUDIO
-    bool        mWaitforBass;
-    bool        mWaitforMidlow;
-    bool        mWaitforMidHigh;
-    bool        mWaitforHigh;
-    
     bool        mAlive;
     
     bool        mDrawCharacter;

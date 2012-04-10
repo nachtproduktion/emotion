@@ -83,6 +83,8 @@ struct Bond {
     }
     
     void render() {
+        if( s->isOff() ) { return; }
+        
         gl::drawLine(a->getPosition(), b->getPosition());
     }
     
