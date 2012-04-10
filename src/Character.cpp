@@ -591,7 +591,7 @@ bool Character::waitforMidlow() {
 
 void Character::inputMidlow( PeakTimer _pt ) {
     mMovement.midlow( _pt );
-    cout << "input: " << _pt.mPeak << " - " << _pt.mTime - niko::getTimeMS() << endl;
+    //cout << "input: " << _pt.mPeak << " - " << _pt.mTime - niko::getTimeMS() << endl;
 }
 
 bool Character::waitforMidHigh() {

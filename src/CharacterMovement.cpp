@@ -200,6 +200,9 @@ void CharacterMovement::endOfStartAnimation() {
             p->moveTo( p->savePosition );
             p->setFixed();
             
+            int id = p->getStandBondID();
+            mpStandBonds->at(id).setBondLength(mpStandBonds->at(id).mSaveMaxLength);
+            
         }
     }
     
@@ -230,8 +233,56 @@ bool CharacterMovement::getWaitfor( int _w ) {
     return mWaitfor[ _w ];
 }
 
+void stopBass()
+{
+    mWaitfor[W_BASS] = true;
+}
+
+
 void CharacterMovement::bass( PeakTimer _pt ) {
     mWaitfor[W_BASS] = false;
+    
+    int frames = ci::app::getElapsedFrames();
+    Vec3f noise = smPerlin.dfBm( mpBackbone->getBottom()->getPosition() * 0.01f + ci::Vec3f( 0, 0, frames / 100.0f ) );
+    mPerlin = noise.normalized() * niko::mapping( _pt.mPeak, 0, 10, 1.0f, 20.0f);
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
+        
+        if( p->mLevel == CPL_FEELER && p->mFunction == CPF_STAND ) {
+            
+            Vec3f target = mPerlin + Rand::randVec3f() * 5;
+            
+            p->posToSave();
+            p->mAnimPos = ci::Vec3f::zero();
+            
+            //Time Calc
+            float dur = _pt.mTime - niko::getTimeMS();
+            
+            int easeRand = Rand::randInt(5);
+            EaseFn easeFunction = EaseNone();
+            
+            switch (easeRand) {
+                case 1: easeFunction = EaseInSine(); break;
+                case 2: easeFunction = EaseInOutBounce(); break;
+                case 3: easeFunction = EaseOutCirc(); break;
+                case 4: easeFunction = EaseInOutElastic( 2, 1 ); break;
+            }
+            
+            target.y = mPerlin.y * 0.4;
+
+            timeline().apply( &p->mAnimPos, target, dur/1000, easeFunction )
+                    .finishFn( stopBass ); 
+            
+            target.x = Rand::randFloat(-500,500);
+            target.y = 0;
+            target.z = Rand::randFloat(-500,500);
+            
+            timeline().appendTo( &p->mAnimPos, target, 0.5f, EaseNone() );
+            
+            p->setFixed();
+            
+        }
+    }
     
 }
 
@@ -244,7 +295,7 @@ void CharacterMovement::midlow( PeakTimer _pt ) {
     mWaitfor[W_MIDLOW] = false;
     
     Vec3f randTarget = Rand::randVec3f();
-    randTarget.y = 0;
+    //randTarget.y = 0;
     randTarget *= niko::mapping( _pt.mPeak, 0, 3, 5.0f, 10.0f);
     
     CharacterPoint * cpt = mpBackbone->getBottom();
@@ -267,10 +318,14 @@ void CharacterMovement::midlow( PeakTimer _pt ) {
 void CharacterMovement::midhigh( PeakTimer _pt ) {
     mWaitfor[W_MIDHIGH] = false;
     
+    //dauer bewegung
+    
 }
 
 void CharacterMovement::high( PeakTimer _pt ) {
     mWaitfor[W_HIGH] = false;
+    
+    
     
 }
 
@@ -465,13 +520,21 @@ void CharacterMovement::update() {
     
     if( mDoMove == false ) { return; }
     
+    //STAND BASS UPDATE
+    if( mWaitfor[W_BASS] == false ) {
+        for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
+            if( p->mLevel == CPL_FEELER && p->mFunction == CPF_STAND ) {
+                p->addAnimToPosition();
+            }
+        }
+    } 
     
-    cout << mWaitfor[W_MIDLOW] << endl;
     // BACKBONE MIDLOW UPDATE
     if( mWaitfor[W_MIDLOW] == false ) {
         CharacterPoint * cpt = mpBackbone->getBottom();
         cpt->addAnimToPosition();
     }
+    
     
     if( mActive[BACK] ) {
         setBack();
