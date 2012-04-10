@@ -27,7 +27,7 @@ CharacterSpline::CharacterSpline( std::vector<ci::Vec3f> _pointList ) {
     
     
     //Create ParticleController
-    //createParticleController();
+    createParticleController();
     
     //Circle profile - radius - segments
     makeCircleProfile( mProf, 5.0f, 16 );
@@ -176,7 +176,7 @@ void CharacterSpline::update( std::vector<ci::Vec3f> _pointList ) {
     buildPTF();
 
     updateVBO();
-    //updateParticle();
+    updateParticle();
     
 }	
 

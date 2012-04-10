@@ -6,7 +6,6 @@
 #include "cinder/ImageIo.h"
 #include "cinder/BSpline.h"
 #include "Resources.h"
-
 #include <math.h>
 
 using namespace ci;
@@ -15,40 +14,50 @@ using namespace std;
 
 Character::Character()
 {
-    mCenterPosition = Vec3f::zero(); //Vec3f(20,100,5);
-    mRotation   = Quatf();
+    mCenterPosition     = Vec3f::zero();
+    mRotation           = Quatf();
     
-    mRadius = 100.0f;
-    mMaxLevels = 0;
+    mRadius             = 100.0f;
+    mMaxLevels          = 0;
     
-    mForceTimer = false;
+    mForceTimer         = false;
     mNumberOfRootPoints = 0;
-    mNextBeat = niko::getTimeMS();
     
-    mDrawCharacter = true;
+    mDrawCharacter      = true;
+    mAlive              = false;
+    
+    mWaitforBass        = false;
+    mWaitforMidlow      = false;
+    mWaitforMidHigh     = false;
+    mWaitforHigh        = false;
     
 }
 
 Character::Character( ci::Vec3f _pos, float _radius, Quatf _rotation )
 {
-    mCenterPosition = _pos;
-    mRotation   = _rotation;
+    mCenterPosition     = _pos;
+    mRotation           = _rotation;
     
-    mRadius = _radius;
-    mMaxLevels = 0;
+    mRadius             = _radius;
+    mMaxLevels          = 0;
     
-    mForceTimer = false;
+    mForceTimer         = false;
     mNumberOfRootPoints = 0;
-    mNextBeat = niko::getTimeMS();
     
-    mDrawCharacter = true;
+    mDrawCharacter      = true;
+    mAlive              = false;
+    
+    mWaitforBass        = false;
+    mWaitforMidlow      = false;
+    mWaitforMidHigh     = false;
+    mWaitforHigh        = false;
 }
 
 //////////////////////////////////////////////
 // MAKE STRUCTURE ////////////////////////////
 //////////////////////////////////////////////
 
-void Character::createNewStructure(int _num) {
+void Character::createNewStructure( int _num ) {
     
     
     //Clear all Objects
@@ -66,7 +75,7 @@ void Character::createNewStructure(int _num) {
     createCharacter();
     
     //create pathes for splines
-    createBackbone();
+    createBackbone();   //set mBackbone
     createSplinesA();
     //createSplinesB();
     
@@ -74,7 +83,7 @@ void Character::createNewStructure(int _num) {
     //Create Charactermovement
     mMovement.setup( &mCharacterPoints, &mBonds );
     mMovement.setStandBond( &mStandBonds );
-    mMovement.setBackboneBond( &mBackboneBond );
+    mMovement.setBackboneBond( mBackbone.getBond() );
     mMovement.setPhysics( &mPhysics );
     mMovement.initStandUp();
     
@@ -87,6 +96,7 @@ void Character::createNewStructure(int _num) {
     //Textures
     mParticleTexture	= gl::Texture( loadImage( loadResource( RES_PARTICLE ) ) );
     
+    mAlive = true;
 }
 
 void Character::createCharacter() {
@@ -277,11 +287,6 @@ void Character::createCharacter() {
         }
     }
     
-    //make backbone
-    if(pBackboneBottom != NULL && pBackboneTop != NULL) {
-        mBackboneBond = Bond(pBackboneTop, pBackboneBottom);
-        mBackboneBond.makeBond( &mPhysics );
-    } 
     
     //Stands
     mStandBonds.clear();
@@ -397,7 +402,7 @@ void Character::createPhysics() {
     
     //physics.verbose = true;			// dump activity to log
     mPhysics.setGravity(Vec3f(0, GRAVITY, 0));
-    mPhysics.setWorldSize(Vec3f(-width/2, -height, -width/2), Vec3f(width/2, height, width/2));
+    mPhysics.setWorldSize(Vec3f(-width/2, -height*2, -width/2), Vec3f(width/2, height, width/2));
     //mPhysics.setWorldSphere(CENTER, mRadius);
     mPhysics.setSectorCount(SECTOR_COUNT);
     
@@ -413,7 +418,8 @@ void Character::createPhysics() {
 
 void Character::createBackbone() {
     
-    mRootPath.clear();
+    std::vector<CharacterPoint*> rootPath;
+    rootPath.clear();
     
     for( int z = 0; z < mCharacterPoints.size(); z++ ) {
         if( mCharacterPoints[z].mLevel == CPL_ROOT && mCharacterPoints[z].mFunction == CPF_START ) {
@@ -421,28 +427,21 @@ void Character::createBackbone() {
             CharacterPoint* lastPoint = &mCharacterPoints[z];
             while( lastPoint->mFunction != CPF_END ) {
                 if( lastPoint->mFunction != CPF_SPACER ) {
-                    mRootPath.push_back( lastPoint );
+                    rootPath.push_back( lastPoint );
                     lastPoint = lastPoint->getParent();   
                 }
             }
             
-            mRootPath.push_back( lastPoint );
+            rootPath.push_back( lastPoint );
             
         }
     }
     
     //
-    mBackbone.setPoints( mRootPath );
-    
-    //Make Root Spline
-    vector<Vec3f> newPoints;
-    for( int u = 0; u < mRootPath.size(); u++ ) {
-        newPoints.push_back( mRootPath[u]->getPosition() );
-    }
-    
-    mCharacterRoot = CharacterSpline( newPoints );
-    mCharacterRoot.setRoot();
-    
+    mBackbone.setPoints( rootPath );
+    mBackbone.setPhysics( &mPhysics );
+    mBackbone.makeBond();
+    mBackbone.makeSpline();
     
 }
 
@@ -561,48 +560,104 @@ int Character::countEnds() {
 }
 
 //////////////////////////////////////////////
+// DEL FUNCTIONS /////////////////////////////
+//////////////////////////////////////////////
+
+void Character::destroyStructure() {
+    
+    //Clear all Objects
+    mParticleController.clear();
+    mBonds.clear();
+    mCharacterPoints.clear();
+    mCharacterSplines.clear();
+    mPhysics.clear();
+    
+    mAlive = false;
+    
+}
+
+//////////////////////////////////////////////
+// AUDIO FUNCTIONS ///////////////////////////
+//////////////////////////////////////////////
+
+void Character::startAnimation( time_t _duration ) {
+    mMovement.startAnimation( _duration );
+}
+
+bool Character::waitforBass() {
+    return mWaitforBass;
+}
+
+void Character::inputBass( PeakTimer _pt ) {
+    
+}
+
+bool Character::waitforMidlow() {
+    return mWaitforMidlow;
+}
+
+void Character::inputMidlow( PeakTimer _pt ) {
+    
+}
+
+bool Character::waitforMidHigh() {
+    return mWaitforMidHigh;
+}
+
+void Character::inputMidhigh( PeakTimer _pt ) {
+    
+}
+
+bool Character::waitforHigh() {
+    return mWaitforHigh;
+}
+
+void Character::inputHigh( PeakTimer _pt ) {
+    
+}
+
+
+//////////////////////////////////////////////
 // SET FUNCTIONS /////////////////////////////
 //////////////////////////////////////////////
 
 
-void Character::setRadius( float _r ) {
-    
-    if( _r != mRadius ) {
-    
-        float scaleFactor = _r/mRadius;
-        scale(scaleFactor);
-    
-        mRadius = _r;
-        //mPhysics.setWorldSphere(CENTER, mRadius);
-        
-     }
-}
+//void Character::setRadius( float _r ) {
+//    
+//    if( _r != mRadius ) {
+//    
+//        float scaleFactor = _r/mRadius;
+//        scale(scaleFactor);
+//    
+//        mRadius = _r;
+//        //mPhysics.setWorldSphere(CENTER, mRadius);
+//        
+//     }
+//}
+//
+//void Character::scale( float _s ) {
+//     
+//    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
+//        
+//        Vec3f pointVec = p->getPosition();
+//        pointVec *= _s;
+//        p->moveTo(pointVec);
+//
+//	}
+//    
+//    for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){
+//        p->setBondLength( p->getBondLength() * _s );
+//        p->mSaveDistanceA *= _s;    
+//    } 
+//    
+//    mFrustrationAtt.changeWorld( CENTER_POS, mRadius );
+//    mEngagementAtt.changeWorld( CENTER_POS, mRadius );
+//    
+//}
 
-void Character::scale( float _s ) {
-     
-    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
-        
-        Vec3f pointVec = p->getPosition();
-        pointVec *= _s;
-        p->moveTo(pointVec);
 
-	}
-    
-    for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){
-        p->setBondLength( p->getBondLength() * _s );
-        p->mSaveDistanceA *= _s;    
-    } 
-    
-    mFrustrationAtt.changeWorld( CENTER_POS, mRadius );
-    mEngagementAtt.changeWorld( CENTER_POS, mRadius );
-    
-}
 
-void Character::setNextBeat( time_t _bang ) {
-    
-    mNextBeat = _bang;
-    
-}
+
 
 void Character::dance() {
     
@@ -672,8 +727,8 @@ void Character::gravity() {
          for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){ 
              p->turnOff();
          }   
-         
-         mBackboneBond.turnOff();
+        
+         mBackbone.getBond()->turnOff();
          
          count = 1;
          mPhysics.setGravity(Vec3f(0, 3, 0));
@@ -687,7 +742,7 @@ void Character::gravity() {
              p->turnOn();
          }   
          
-         mBackboneBond.turnOn();
+         mBackbone.getBond()->turnOn();
          
          count = 0;
          mPhysics.setGravity(Vec3f(0, 0, 0));
@@ -721,18 +776,6 @@ void Character::test() {
 //////////////////////////////////////////////
 // UPDATE FUNCTIONS //////////////////////////
 //////////////////////////////////////////////
-
-
-void Character::updateRootSpline() {
-    
-    vector<Vec3f> newPoints;
-    for( int u = 0; u < mRootPath.size(); u++ ) {
-        newPoints.push_back( mRootPath[u]->getPosition() );
-    }
-    
-    mCharacterRoot.update( newPoints );
-    
-}
 
 void Character::updateSplines() {
     
@@ -778,39 +821,22 @@ void Character::updateEmotions( float _frustration, float _engagement,float _med
 
 void Character::update() {
         
-    //Movement Update
+    if(!mAlive) { return; };
+
     mMovement.update();
-    
     mBackbone.update();
     
     if(!mDrawCharacter) {
         
         //Splines Update
-        updateRootSpline();
         updateSplines();
-        
-        
     }
-    
-    
-    //Mainpoint update
-//    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
-//       
-//        int pcID = p->getParticleControllerID();
-//        if(pcID > -1) {
-//            mParticleController[pcID].setTarget(p->getPosition());
-//        }
-//    }
-    
-    
-//    //Particle Update
-//    for(  std::vector<ParticleController>::iterator p = mParticleController.begin(); p != mParticleController.end(); ++p ){
-//        p->update();
-//    }
-    
+
     //physics update
     mPhysics.update();
     
+    
+    ///// najaaa
     if( mCharacterPoints.size() > 0) {
         mCenterPosition = mCharacterPoints[0].getPosition();
     }
@@ -820,57 +846,13 @@ void Character::update() {
 // RENDER FUNCTIONS //////////////////////////
 //////////////////////////////////////////////
 
-void Character::drawRoom() {
-    
-    float width = 2000.0f;
-    float height = 200.0f;
-    
-    float a = 0.2f;
-    
-    glBegin(GL_QUADS);
-    // draw right wall
-    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(width/2, height+1, width/2);
-    glColor4f(1, 1, 1, a);				glVertex3f(width/2, -height, width/2);
-    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(width/2, -height, -width/2);
-    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(width/2, height+1, -width/2);
-    
-    // back wall
-    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(width/2, height+1, -width/2);
-    glColor4f(1, 1, 1, a);				glVertex3f(width/2, -height, -width/2);
-    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(-width/2, -height, -width/2);
-    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(-width/2, height+1, -width/2);
-    
-    // left wall
-    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(-width/2, height+1, -width/2);
-    glColor4f(1, 1, 1, a);				glVertex3f(-width/2, -height, -width/2);
-    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(-width/2, -height, width/2);
-    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(-width/2, height+1, width/2);
-    
-    // front wall
-    glColor4f(0.95, 0.95, 0.95, a);	glVertex3f(width/2, -height, width/2);
-    glColor4f(0.85, 0.85, 0.85, a);	glVertex3f(width/2, height+1, width/2);
-    glColor4f(0.9, 0.9, 0.9, a);		glVertex3f(-width/2, height+1, width/2);
-    glColor4f(1, 1, 1, a);				glVertex3f(-width/2, -height, width/2);
-    
-    // floor
-    glColor4f(.8, 0.8, 0.8, a);
-    glVertex3f(width/2, height+1, width/2);
-    glVertex3f(width/2, height+1, -width/2);
-    glVertex3f(-width/2, height+1, -width/2);
-    glVertex3f(-width/2, height+1, width/2);
-    glEnd();
-    
-}
-
 void Character::draw() {
     
-
+    if(!mAlive) { return; };
     
     
     
     gl::pushMatrices();
-    
-    drawRoom();
     
         //gl::translate( mCenterPosition );
         //gl::rotate( mRotation );
@@ -937,36 +919,9 @@ void Character::draw() {
                 
                 
                 
-//                const int numSegments = 30;
+//               const int numSegments = 30;
                 gl::color( ColorA( 0.8f, 0.2f, 0.8f, 0.5f ) );
                 glLineWidth( 2.0f );
-                /*
-                glBegin( GL_LINE_LOOP );
-                for( int s = 0; s <= numSegments; ++s ) {
-                    float t = s / (float)numSegments;
-                    
-                    
-                    for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){ 
-                    
-                        cout << mSplines.size() << endl; 
-                        gl::vertex( p->getPosition( t ) + Vec3f( 0.0f, 0.5f, 0.0f ) );
-                    
-                    }
-                    
-                    
-                }
-                 glEnd();
-                 */
-                
-                
-//                for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){                
-//                    glBegin( GL_LINE_STRIP );
-//                    for( int s = 0; s <= numSegments; ++s ) {
-//                        float t = s / (float)numSegments;
-//                        gl::vertex( p->getPosition( t ) + Vec3f( 0.0f, 0.5f, 0.0f ) );
-//                    }
-//                    glEnd();
-//                }
                  
                 
                 for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
@@ -975,9 +930,9 @@ void Character::draw() {
                     p->drawVBO();
                 }
                 
-                //mCharacterRoot.drawFrames( 1.5f * 2 );
-                //mCharacterRoot.drawFrameSlices( 2.25f * 2 );
-                mCharacterRoot.drawVBO();
+                //mBackbone.getSpline()->drawFrames( 1.5f * 2 );
+                //mBackbone.getSpline()->drawFrameSlices( 2.25f * 2 );
+                mBackbone.getSpline()->drawVBO();
                 
                 
                 glEnable( GL_TEXTURE_2D );
@@ -989,10 +944,10 @@ void Character::draw() {
                 mParticleTexture.bind();
                  
                 for(  std::vector<CharacterSpline>::iterator p = mCharacterSplines.begin(); p != mCharacterSplines.end(); ++p ){ 
-                    //p->drawParticle();
+                    p->drawParticle();
                 }
                 
-                //mCharacterRoot.drawParticle();
+                mBackbone.getSpline()->drawParticle();
                 
                 mParticleTexture.unbind();
                 

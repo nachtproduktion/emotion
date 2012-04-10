@@ -1,5 +1,6 @@
 #include "CharacterMovement.h"
 #include "cinder/Rand.h"
+#include "cinder/Perlin.h"
 
 #include <math.h>
 
@@ -12,6 +13,8 @@ using namespace std;
 #define SPHERE 2
 #define BACK   3
 #define CENTER 4
+
+Perlin smPerlin( 2 );
 
 CharacterMovement::CharacterMovement() {
     
@@ -27,6 +30,8 @@ CharacterMovement::CharacterMovement() {
     mpStandBonds = NULL;
     mPhysic = NULL;
     mStandUpPoint = NULL;
+    
+    mPerlin         = Vec3f::zero();
 }
 
 void CharacterMovement::setup(  std::vector<CharacterPoint> * _pCP,  std::vector<Bond> * _pBonds ) {
@@ -96,6 +101,14 @@ void CharacterMovement::standUp() {
     
 }
 
+/////////////////////////////////////////////
+// MOVEMENTS ////////////////////////////////
+/////////////////////////////////////////////
+
+void CharacterMovement::startAnimation( time_t _duration ) {
+    
+}
+
 void CharacterMovement::wince( int _amount, bool _soft ) {
         
     //Keine Aktion wenn Springen akitiviert ist
@@ -152,7 +165,7 @@ void CharacterMovement::jump( time_t _ms, int _amount ) {
     mActive[JUMP] = true;
 }
 
-void CharacterMovement::moveOnSphere( float _angle, time_t _ms ) {
+void CharacterMovement::moveOnSphere( float _angle, time_t _ms, bool _stand ) {
 
     mStartTimes[SPHERE] = niko::getTimeMS();
         
@@ -164,8 +177,14 @@ void CharacterMovement::moveOnSphere( float _angle, time_t _ms ) {
     float angleInRadiansY = ci::toRadians( Rand::randFloat(_angle) );
     float angleInRadiansZ = ci::toRadians( Rand::randFloat(_angle) );
     
-    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
-        if( p->getEndOfLine() && p->mFunction != CPF_STAND) {
+    mfuncfunc = CPF_STAND;
+    if( _stand ) { mfuncfunc = CPF_NORMAL; };
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
+        
+        
+        
+        if( p->getEndOfLine() && p->mFunction != mfuncfunc) {
              
             //zufall ziel
             p->savePosition = p->getPosition();
@@ -182,6 +201,8 @@ void CharacterMovement::moveOnSphere( float _angle, time_t _ms ) {
             //Save Position & Target
             p->saveTarget = target;    
         }   
+        
+        
     }
     
     //Start Moving
@@ -229,6 +250,31 @@ void CharacterMovement::setBack( time_t _ms ) {
     for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){  
         float distLenght = niko::mapping( t, 0, 1, p->mSaveDistanceB, p->mSaveDistanceA);
         p->setBondLength( distLenght );
+    }
+    
+}
+
+void CharacterMovement::bass( float _input ) {
+    
+//moveOnSphere( 90, 10, true );
+    
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
+        
+        if( p->mLevel == CPL_FEELER && p->mFunction == CPF_STAND ) {
+            
+           
+            int counter = ci::app::getElapsedFrames();
+            Vec3f pos = p->getPosition();
+            
+            Vec3f noise = smPerlin.dfBm( pos * 0.01f + ci::Vec3f( 0, 0, counter / 100.0f ) );
+            mPerlin = noise.normalized() * 0.005f;
+            
+            pos += mPerlin * _input;
+            
+            p->moveTo(pos);
+           // p->setFree();
+            
+        }
     }
     
 }
@@ -337,7 +383,7 @@ void CharacterMovement::_moveOnSphere() {
     if ( timeDelta <= 0 ) { 
         
         for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
-            if( p->getEndOfLine() && p->mFunction != CPF_STAND) {
+            if( p->getEndOfLine() && p->mFunction != mfuncfunc) {
                 p->moveTo( p->saveTarget );
             }
         }
@@ -349,7 +395,7 @@ void CharacterMovement::_moveOnSphere() {
     
     
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
-        if( p->getEndOfLine() && p->mFunction != CPF_STAND ) {
+        if( p->getEndOfLine() && p->mFunction != mfuncfunc ) {
 
             float t = niko::mapping( timeDelta, 0, mTargetTimes[SPHERE] - mStartTimes[SPHERE], 1, 0, true);
             t = ci::easeInOutQuad( t ); 

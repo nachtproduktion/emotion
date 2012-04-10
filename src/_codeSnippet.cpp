@@ -1,4 +1,32 @@
-void updateAttractors() {
+/*
+ glBegin( GL_LINE_LOOP );
+ for( int s = 0; s <= numSegments; ++s ) {
+ float t = s / (float)numSegments;
+ 
+ 
+ for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){ 
+ 
+ cout << mSplines.size() << endl; 
+ gl::vertex( p->getPosition( t ) + Vec3f( 0.0f, 0.5f, 0.0f ) );
+ 
+ }
+ 
+ 
+ }
+ glEnd();
+ */
+
+
+//                for(  std::vector<BSpline3f>::iterator p = mSplines.begin(); p != mSplines.end(); ++p ){                
+//                    glBegin( GL_LINE_STRIP );
+//                    for( int s = 0; s <= numSegments; ++s ) {
+//                        float t = s / (float)numSegments;
+//                        gl::vertex( p->getPosition( t ) + Vec3f( 0.0f, 0.5f, 0.0f ) );
+//                    }
+//                    glEnd();
+//                }
+
+//void updateAttractors() {
     
     
     
@@ -25,7 +53,7 @@ void updateAttractors() {
      }
      }
      */
-}
+//}
 
 
 

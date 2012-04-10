@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "niko_functionen.h"
-#include "CharacterStructs.h"
+#include "CharacterBond.h"
 #include "CharacterPoint.h"
 
 #include "Constants.h"
@@ -26,9 +26,11 @@ class CharacterMovement {
     void        setStandBond( std::vector<Bond> * _pBonds );
     void        setBackboneBond( Bond * _pBond );
     
+    void        startAnimation( time_t _duration );
+    
     void        wince( int _amount = 50, bool _soft = true );
     void        jump( time_t _ms, int _amount = 50 );
-    void        moveOnSphere( float _angle = 90, time_t _ms = 0 );
+    void        moveOnSphere( float _angle = 90, time_t _ms = 0, bool _stand = false );
     void        moveToCenter( time_t _ms = 0 );
     void        setBack( time_t _ms = 0 );
         
@@ -36,6 +38,8 @@ class CharacterMovement {
     
     void        initStandUp();
     void        standUp();
+    
+    void        bass( float _input );
     
 private:
     
@@ -59,6 +63,10 @@ private:
     time_t      mTargetTimes[MOVEMENTS];
     
     bool        mActive[MOVEMENTS];
+    
+    int     mfuncfunc;
+    
+    ci::Vec3f   mPerlin;
     
 };
 

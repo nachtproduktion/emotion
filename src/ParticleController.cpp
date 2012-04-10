@@ -32,9 +32,9 @@ void ParticleController::updateMatrix( ci::Matrix44f _matrix ) {
 void ParticleController::update( ci::Vec3f _mpoint ) {
     
     
-    if(mParticles.size() == 0 ) addParticles( mCircleRadius*1.5, true );
+    if(mParticles.size() == 0 ) { addParticles( mCircleRadius*1.5, true ); }
     
-    //addParticles( Rand::randInt(1) );
+    //addParticles( Rand::randInt(2), false );
     
     for( list<Particle>::iterator p = mParticles.begin(); p != mParticles.end(); ){
         

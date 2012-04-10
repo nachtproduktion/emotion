@@ -13,7 +13,7 @@
 
 #include <list>
 #include <vector>
-
+#include <sys/time.h>
 
 #include "MSAPhysics.h"
 #include "MSAPhysics3D.h"
@@ -23,12 +23,14 @@
 #include "niko_functionen.h"
 #include "ParticleController.h"
 #include "EmoAttractor.h"
-#include "CharacterStructs.h"
+#include "CharacterBond.h"
 #include "CharacterPoint.h"
 #include "CharacterSpline.h"
 #include "CharacterMovement.h"
+#include "CharacterBackbone.h"
 
 #include "Constants.h"
+#include "Structs.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -43,7 +45,7 @@ class Character {
 	Character();
     Character( ci::Vec3f _pos, float _radius, Quatf _rotation );
     
-    void createNewStructure( int _num );
+    void createNewStructure( int _num = 5);
     void createCharacter();
     void setProperties( CharacterPoint *_point, int _typ );
     void setRelations( CharacterPoint *_parent, CharacterPoint *_child );
@@ -59,9 +61,26 @@ class Character {
     void pathFinder( CharacterPoint *_lastPoint, int _childID, std::vector<CharacterPoint*> _path );
     int countEnds(); 
     
+    void destroyStructure();
     
-    void setRadius( float _r );
-    void scale( float _s );
+    //AUDIO
+    void startAnimation( time_t _duration );
+    
+    bool waitforBass();
+    void inputBass( PeakTimer _pt );
+    bool waitforMidlow();
+    void inputMidlow( PeakTimer _pt );
+    bool waitforMidHigh();
+    void inputMidhigh( PeakTimer _pt );
+    bool waitforHigh();
+    void inputHigh( PeakTimer _pt );
+    
+    //Setting Funktions
+    //void setAudioController();
+    
+    //void setRadius( float _r );
+    //void scale( float _s );
+    
     void addRandomForce( float _f );
     void move(Vec3f _position, Quatf _rotation);
     void dance();
@@ -69,28 +88,35 @@ class Character {
     void jump( int _amount = 50 );
     void center();
     void sphere();
+    
+    void bass( float _input );
+    void midlow( float _input );
+    
     //RENAME
     void test();
     void gravity();
     void setNextBeat( time_t _bang );    
   
-    void updateRootSpline();
     void updateSplines();
     void updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement );
     void update();
     
-    void drawRoom(); 
     void draw();
     
-
+    //AUDIO
+    bool        mWaitforBass;
+    bool        mWaitforMidlow;
+    bool        mWaitforMidHigh;
+    bool        mWaitforHigh;
+    
+    bool        mAlive;
+    
     bool        mDrawCharacter;
     
     float       mRadius;
     int         mNumberOfRootPoints;
     bool        mOpenLines;
     int         mMaxLevels;
-    
-    time_t      mNextBeat;
 
     std::vector<CharacterPoint> mCharacterPoints;
     CharacterMovement           mMovement;
@@ -102,8 +128,6 @@ class Character {
     //Spline & Path
     std::vector< std::vector<CharacterPoint*> > mPaths;
     std::vector<CharacterSpline>                mCharacterSplines;
-    std::vector<CharacterPoint*>                mRootPath;
-    CharacterSpline                             mCharacterRoot;
     
     Backbone                                    mBackbone;
     
@@ -116,7 +140,6 @@ class Character {
     int                     mForceTimer;
     std::vector<Bond>       mBonds;
     std::vector<Bond>       mStandBonds;
-    Bond                    mBackboneBond;
     
     //EmoAttractos
     EmoAttractor            mFrustrationAtt;

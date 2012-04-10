@@ -77,7 +77,7 @@ Particle::Particle( ci::Matrix44f* _matrix, float _radius, bool _statical ) {
     
 	mIsDead			= false;
 	mAge			= 0.0f;
-	mLifeSpan		= Rand::randFloat( 180.0f, 200.0f );
+	mLifeSpan		= Rand::randFloat( 80.0f, 100.0f );
 	
     mColor          = ColorA(1.0f,1.0f,1.0f,1.0f);
     
@@ -109,8 +109,8 @@ void Particle::findPerlin()
 
 void Particle::findVelocity()
 {
-	mVelocity += mPerlin;
-    mPosition += mVelocity * 0.2;
+	mVelocity = mPerlin;
+    mPosition += mVelocity * 2;
 }
 
 	
@@ -178,5 +178,5 @@ void Particle::update()
 void Particle::render()
 {
     gl::color( mColor );
-    gl::drawBillboard(mPosition, Vec2f(mRadius,mRadius), 0.0, br, bup);
+    gl::drawBillboard(mPosition, Vec2f(mRadius*1.4,mRadius*1.4), 0.0, br, bup);
 }
