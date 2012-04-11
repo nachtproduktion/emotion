@@ -28,6 +28,8 @@ CharacterPoint::CharacterPoint() {
     mSpacers.clear();
     mChilds.clear();
     mBondIDs.clear();
+    
+    mSuperParent = NULL;
 }
 
 CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, int _pID ) {
@@ -59,6 +61,8 @@ CharacterPoint::CharacterPoint( Vec3f _pos, MSA::Physics::World3D * _physics, in
     setParticle();
     calcShellRadius();
     
+    mSuperParent = NULL;
+    
 }
 
 ///////////////////////////////////
@@ -73,6 +77,15 @@ void CharacterPoint::setParticle() {
 
 ///////////////////////////////////
 //CHILDS AND PARENTS
+
+void CharacterPoint::setSuperParent( CharacterPoint* _superparent ) {
+    mSuperParent = _superparent;
+}
+
+CharacterPoint* CharacterPoint::getSuperParent() {
+    return mSuperParent;
+}
+
 void CharacterPoint::setParent( CharacterPoint* _parent ) {
     mParent = _parent;
 }

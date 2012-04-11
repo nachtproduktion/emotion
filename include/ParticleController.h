@@ -25,7 +25,9 @@ class ParticleController {
         
         void setCircleRadius( float _radius );
     
-        void addParticles( int _number, bool _statical = false );
+        void addParticles( int _number, ci::Vec3f _vel, bool _statical = false );
+    
+        void doFallDown();
     
         void updateMatrix( ci::Matrix44f _matrix );
         void update( ci::Vec3f _mpoint );
@@ -37,7 +39,8 @@ class ParticleController {
         float                               mCircleRadius;			// points to tube (read extrude)
         ci::Matrix44f                       mMatrix;
     
-        std::list<Particle>	mParticles;
+        std::list<Particle>                 mParticles;
+        bool                                mDoFallDown;
     
     /*
         void setSphere( float _radius );

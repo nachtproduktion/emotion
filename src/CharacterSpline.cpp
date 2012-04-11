@@ -162,6 +162,7 @@ void CharacterSpline::buildPTF() {
 void CharacterSpline::setRoot( bool _r ) {
     mRoot = _r;
     makeCircleProfile( mProf, 25.0f, 16 );
+    createParticleController();
 }
 
 bool CharacterSpline::getRoot() {
@@ -180,12 +181,21 @@ void CharacterSpline::update( std::vector<ci::Vec3f> _pointList ) {
     
 }	
 
+void CharacterSpline::particleFallDown() {
+    
+    for( int i = 0; i < mNumSegs; ++i ) {
+        mParticleController[i].doFallDown();
+    }
+    
+}
+
 
 void CharacterSpline::updateParticle() {
 
     for( int i = 0; i < mNumSegs; ++i ) {
+
         mParticleController[i].updateMatrix( mFrames[i] );
-        mParticleController[i].update( mPs[mNumSegs] );
+        mParticleController[i].update( mPs[i] );
     }
     
 }

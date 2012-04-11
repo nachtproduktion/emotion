@@ -21,6 +21,8 @@ class Particle {
     void findPerlin();
 	void findVelocity();
     
+    void falldown();
+    
     void updatePosition( ci::Vec3f _pos );
     void update();
     
@@ -52,6 +54,7 @@ private:
     ci::Matrix44f*              mControllerMatrix;
     
     bool                        mStatical;
+    bool                        mFallDown;
     
 
     

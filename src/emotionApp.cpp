@@ -10,6 +10,7 @@
 #include "OscListener.h"
 
 #include "AudioController.h"
+#include "EmotivController.h"
 #include "ParticleController.h"
 #include "InfoPanel.h"
 #include "Structs.h"
@@ -61,13 +62,12 @@ class emotionApp : public AppBasic {
     
     //Controller
     AudioController     mAudioController;
+    EmotivController    mEmotivController;
     
     //Character
     Character           mCharacter;
     int                 mFAmount;
-    
-    
-    bool                mToggleDance;
+
     
 	// PARAMS
 	params::InterfaceGl	mParams;
@@ -110,15 +110,14 @@ void emotionApp::setup()
     mAudioController.init( OSC_AUDIO_PORT );
     mAudioController.addCharacter(&mCharacter);
     
+    mEmotivController.init( OSC_EMOTIV_PORT );
+    
     
     //CHARACTER
     mFAmount            = 10;
     
     mCharPosition       = ci::Vec3f::zero();
     mLastCharPosition   = ci::Vec3f::zero();
-    
-    mToggleDance        = false;
-
     
     //Emotion
     mFrustration        = 0;
@@ -173,6 +172,7 @@ void emotionApp::update()
 
     //Controller UPDATE
     mAudioController.update();
+    mEmotivController.update();
     
     
     // UPDATE CAMERA
@@ -227,6 +227,18 @@ void emotionApp::updateCharacters() {
             mCharacter.inputHigh( pt );
         }
     }
+    
+    //Spezial Funktionen
+    pt = mAudioController.getNextPeak( "/gravity" );
+    if( pt.mTime != 0 ) {
+        mCharacter.gravity( pt );
+    }
+    
+    pt = mAudioController.getNextPeak( "/jump" );
+    if( pt.mTime != 0 ) {
+        mCharacter.jump( pt );
+    }
+    
     
     mCharacter.move(mCharPosition, mArcball.getQuat());
     mCharacter.update();
@@ -351,12 +363,8 @@ void emotionApp::keyDown( KeyEvent event )
             mCharPosition = ci::Vec3f::zero();
         break;
         case 'i': mInfoPanel.toggleState(); break;
-        case '1': mToggleDance = !mToggleDance; break;
-        case '2': mCharacter.wince(); break;
-        case '3': mCharacter.jump(); break;
-        case '4': mCharacter.center(); break;
+        case '1': mCharacter.moveToCenter(); break;
         case '5': mCharacter.sphere(); break;
-        case '6': mCharacter.gravity(); break;
         case 'd': 
             mCharacter.mDrawCharacter = !mCharacter.mDrawCharacter; 
             mCharacter.mBackbone.mDrawSpline = !mCharacter.mBackbone.mDrawSpline;

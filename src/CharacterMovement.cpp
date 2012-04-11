@@ -20,6 +20,7 @@ Perlin smPerlin( 2 );
 bool endStartAnimation;
 //AUDIO + TIMELINE
 bool mWaitfor[W_COUNT];
+bool mActive[MOVEMENTS];
 
 
 CharacterMovement::CharacterMovement() {
@@ -144,6 +145,9 @@ void CharacterMovement::startAnimation( time_t _duration ) {
         mWaitfor[i] = false;
     }
     
+    //Attractions DANCE Vorbereiten
+    mAttractorController.makeDanceAttractors();
+    
     //Alle Punkte Trennen
     for( int i = 0; i < mpBonds->size(); i++ ) {
         mpBonds->at(i).turnOff();
@@ -167,6 +171,7 @@ void CharacterMovement::startAnimation( time_t _duration ) {
             Vec3f sp = p->getPosition();
             sp.y = 200;
             p->savePosition = sp;
+            p->saveTarget = sp;
             
         }
         
@@ -217,6 +222,9 @@ void CharacterMovement::endOfStartAnimation() {
     
     mpBackboneBond->turnOn();
     mStandUpBond.turnOn();
+    
+    //DANCE ATTRACTORS ANMACHEN
+    mAttractorController.activateDanceAttractors();
     
     for( int i = 0; i < W_COUNT; i++ ) {
         mWaitfor[i] = true;
@@ -294,6 +302,10 @@ void stopMidlow()
 void CharacterMovement::midlow( PeakTimer _pt ) {
     mWaitfor[W_MIDLOW] = false;
     
+    //neue Atttrctors Setzten
+    mAttractorController.deactivateDanceAttractors();
+    mAttractorController.activateDanceAttractors();
+    
     Vec3f randTarget = Rand::randVec3f();
     //randTarget.y = 0;
     randTarget *= niko::mapping( _pt.mPeak, 0, 3, 5.0f, 10.0f);
@@ -315,56 +327,64 @@ void CharacterMovement::midlow( PeakTimer _pt ) {
     }
 }
 
+void stopMidhigh()
+{
+    mWaitfor[W_MIDHIGH] = true;
+}
+
 void CharacterMovement::midhigh( PeakTimer _pt ) {
     mWaitfor[W_MIDHIGH] = false;
     
-    //dauer bewegung
+    //Time Calc
+    float dur = _pt.mTime - niko::getTimeMS();
+    
+    float target = niko::mapping( _pt.mPeak, 0, 5, 0.0f, 30.0f);
+    if(Rand::randInt(2) == 1) { target *= -1; }
+    
+    timeline().apply( &mAttractorController.mDanceRotation, target, dur/1000, EaseInOutQuad() )
+                .finishFn( stopMidhigh );
+    
+    timeline().appendTo( &mAttractorController.mDanceRotation, 0.0f, 0.5f, EaseOutSine() );
     
 }
 
 void CharacterMovement::high( PeakTimer _pt ) {
+    
     mWaitfor[W_HIGH] = false;
-    
-    
+    wince( _pt );
     
 }
 
 
 ////////////////
 
-void CharacterMovement::wince( int _amount, bool _soft ) {
-        
-    //Keine Aktion wenn Springen akitiviert ist
-    if(mActive[JUMP]) { return; }
+void stopWince()
+{
+    if( !mWaitfor[W_HIGH] ) {
+        mWaitfor[W_HIGH] = true;
+    }
     
+    mActive[WINCE] = false;
+}
+
+void CharacterMovement::wince( PeakTimer _pt ) {
+        
+    mActive[WINCE] = true;
+    mStartTimes[WINCE] = _pt.mTime;
     
     for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
         if( p->getEndOfLine() ) {
-        
+            
             float bondLength = (*mpBonds)[p->getBondID(0)].getBondLength();
+            mpBonds->at(p->getBondID(0)).mSaveDistanceA = bondLength;
             
-            if(!mActive[WINCE]) {
-                mpBonds->at(p->getBondID(0)).mSaveDistanceA = bondLength;
-            }
+            float newLength = niko::mapping( _pt.mPeak, 0, 5, bondLength, 2 );
+            mpBonds->at(p->getBondID(0)).mSaveDistanceB = newLength;
             
-            float newLength = niko::mapping( _amount, 0, 100, 0, bondLength );
-            mpBonds->at(p->getBondID(0)).setBondLength( newLength );
-            
-            if( !_soft ) {
-                Vec3f pos = p->getPosition();
-                pos -= p->getParent()->getPosition();
-                pos.normalize();
-                pos *= newLength;
-                pos += p->getParent()->getPosition();
-                p->moveTo( pos );
-            }
-
         }
-    }
-    
-    mActive[WINCE] = true;
-    
+    }    
 }
+
 
 void CharacterMovement::jump( time_t _ms, int _amount ) {
         
@@ -477,31 +497,6 @@ void CharacterMovement::setBack( time_t _ms ) {
     
 }
 
-void CharacterMovement::bass( float _input ) {
-    
-//moveOnSphere( 90, 10, true );
-    
-    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){
-        
-        if( p->mLevel == CPL_FEELER && p->mFunction == CPF_STAND ) {
-            
-           
-            int counter = ci::app::getElapsedFrames();
-            Vec3f pos = p->getPosition();
-            
-            Vec3f noise = smPerlin.dfBm( pos * 0.01f + ci::Vec3f( 0, 0, counter / 100.0f ) );
-            mPerlin = noise.normalized() * 0.005f;
-            
-            pos += mPerlin * _input;
-            
-            p->moveTo(pos);
-           // p->setFree();
-            
-        }
-    }
-    
-}
-
 ////////////////////////
 //UPDATE
 ////////////////////////
@@ -535,6 +530,15 @@ void CharacterMovement::update() {
         cpt->addAnimToPosition();
     }
     
+    // WINCE UPDATE
+    if( mActive[WINCE] ) { 
+        
+        if( niko::getTimeMS() >= mStartTimes[WINCE] + 20 ) {
+            _wince();
+            stopWince();
+        }
+    } 
+    
     
     if( mActive[BACK] ) {
         setBack();
@@ -542,11 +546,7 @@ void CharacterMovement::update() {
     
     if( mActive[CENTER] ) {
         _moveToCenter();
-    }
-    
-    if( mActive[WINCE] && !mActive[JUMP] ) { 
-        _wince();
-    }    
+    }   
     
     if( mActive[JUMP] ) {
         _jump();
@@ -565,28 +565,37 @@ void CharacterMovement::update() {
 
 void CharacterMovement::_wince() {
     
-    bool ready = true;
+    float newlength = 0;
+    for(  std::vector<CharacterPoint>::iterator p = mpCharacterPoints->begin(); p != mpCharacterPoints->end(); ++p ){ 
+        if( p->getEndOfLine() && p->mFunction != CPF_STAND ) {
+            
+            //Set Bond Length
+            newlength = mpBonds->at(p->getBondID(0)).mSaveDistanceB;
+            //mpBonds->at(p->getBondID(0)).setBondLength(newlength);
+            
+            //Character Point Pos Update
+            Vec3f pos = p->getPosition();
+            pos -= p->getParent()->getPosition();
+            pos.normalize();
+            pos *= newlength;
+            pos += p->getParent()->getPosition();
+            p->moveTo( pos );
+            
+        } else if( p->getEndOfLine() && p->mFunction == CPF_STAND ) {
+            
+            Vec3f pos = p->getPosition();
+            if( pos.y < 50 ) {
+                newlength = mpBonds->at(p->getBondID(0)).mSaveDistanceB;
 
-    for(  std::vector<Bond>::iterator p = mpBonds->begin(); p != mpBonds->end(); ++p ){  
-        if( p->mLevel == 1 ) {
-        
-            float bondLength = p->getBondLength();
-            float saveBondLength = p->mSaveDistanceA;
-            
-            float difference = saveBondLength - bondLength;
-            
-            if( fabs( difference ) <= 1 ) {
-                p->setBondLength( saveBondLength );
-            } else {
-                ready = false;
-                p->setBondLength( bondLength + difference/10 ); 
+                pos.y += Rand::randFloat(5, newlength/2);
+                
+                p->moveTo( pos );
             }
+            
         }
+    
     }
     
-    if(ready) {
-        mActive[WINCE] = false;
-    }
 }
 
 void CharacterMovement::_jump() {
@@ -693,7 +702,9 @@ void CharacterMovement::_moveToCenter() {
 }
 
 
-
+void CharacterMovement::rendershit() {
+    mAttractorController.render();
+}
 
 
 

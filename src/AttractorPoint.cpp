@@ -44,8 +44,10 @@ void AttractorPoint::update() {
 }
 
 void AttractorPoint::render() {
-    if( mAttractor == NULL ) { return; }
     
+    if( mAttractor == NULL ) { return; }
+       
     ci::gl::color(1,1,1);
-    mAttractor->getPosition(), mAttractor->getRadius();
+    gl::drawSphere(mAttractor->getPosition(), mAttractor->getRadius());
+    
 }

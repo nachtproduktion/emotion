@@ -20,5 +20,4 @@ struct PeakTimer {
 };
 
 
-
 #endif

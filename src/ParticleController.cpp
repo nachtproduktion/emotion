@@ -4,7 +4,8 @@
 
 ParticleController::ParticleController() {
 
-    mMatrix   = ci::Matrix44f::zero();
+    mMatrix     = ci::Matrix44f::zero();
+    mDoFallDown = false;
 
 }
 
@@ -15,12 +16,17 @@ void ParticleController::setCircleRadius( float _radius ) {
     
 }
 
-void ParticleController::addParticles( int _number, bool _statical ) {
+void ParticleController::addParticles( int _number, ci::Vec3f _vel,  bool _statical ) {
     
     for(int i = 0; i < _number; i++) {             
             mParticles.push_back( Particle( &mMatrix, mCircleRadius, _statical ) );
+            mParticles.back().setVelocity( _vel );
     }     
     
+}
+
+void ParticleController::doFallDown() {
+    mDoFallDown = true;
 }
 
 void ParticleController::updateMatrix( ci::Matrix44f _matrix ) {
@@ -31,15 +37,25 @@ void ParticleController::updateMatrix( ci::Matrix44f _matrix ) {
 
 void ParticleController::update( ci::Vec3f _mpoint ) {
     
+    static int zaehler = 0;
+    static Vec3f oldmPoint = ci::Vec3f::zero();
     
-    if(mParticles.size() == 0 ) { addParticles( mCircleRadius*1.5, true ); }
+    zaehler++;
     
-    //addParticles( Rand::randInt(2), false );
+    if(mParticles.size() == 0 ) { addParticles( mCircleRadius*1.5, ci::Vec3f::zero(), true ); }
+
+    if( (zaehler % 20) == 0 ) {
+        addParticles( 1, _mpoint - oldmPoint, false );
+    } 
     
     for( list<Particle>::iterator p = mParticles.begin(); p != mParticles.end(); ){
         
         if( ! p->mIsDead ) {
-            p->setVelocity( _mpoint );
+
+            if(mDoFallDown) {
+                p->falldown();
+            }
+            
 			p->update();
 			++p;
 		}
@@ -48,6 +64,15 @@ void ParticleController::update( ci::Vec3f _mpoint ) {
 		}
         
 	}
+    
+    if(mDoFallDown) {
+        addParticles( 5, (_mpoint - oldmPoint)*0.5, false );
+    }
+    
+    
+    mDoFallDown = false;
+    
+    oldmPoint = _mpoint;
     
 }
 

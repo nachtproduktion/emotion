@@ -93,6 +93,9 @@ struct Bond {
     float mSaveDistanceA;
     float mSaveDistanceB;
     float mSaveMaxLength;
+
+    Anim<float> mBondLength;
+    
     MSA::Physics::Particle3D * a;
     MSA::Physics::Particle3D * b;
     MSA::Physics::Spring3D *s;

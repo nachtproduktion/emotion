@@ -10,6 +10,7 @@
 #include "cinder/Utilities.h"
 #include "cinder/Easing.h"
 #include "cinder/gl/Texture.h"
+#include "cinder/Timeline.h"
 
 #include <list>
 #include <vector>
@@ -75,33 +76,28 @@ class Character {
     bool waitforHigh();
     void inputHigh( PeakTimer _pt );
     
-    //Setting Funktions
-    //void setAudioController();
-    
-    //void setRadius( float _r );
-    //void scale( float _s );
-    
-    void addRandomForce( float _f );
-    void move(Vec3f _position, Quatf _rotation);
-    void dance();
-    void wince( int _amount = 50 );
-    void jump( int _amount = 50 );
-    void center();
-    void sphere();
-    
-    void bass( float _input );
-    void midlow( float _input );
-    
     //RENAME
     void test();
-    void gravity();
-    void setNextBeat( time_t _bang );    
-  
+    
+    //movement
+    void addRandomForce( float _f );
+    void move(Vec3f _position, Quatf _rotation);
+    
+    void sphere();
+    void moveToCenter();
+    void jump( PeakTimer _pt );
+    void gravity( PeakTimer _pt );
+     
+    void particleDrop();
+    
+    
     void updateSplines();
     void updateEmotions( float _frustration, float _engagement,float _meditation, float _excitement );
     void update();
     
     void draw();
+    
+    //VARS///////////////
     
     bool        mAlive;
     
@@ -137,7 +133,10 @@ class Character {
     
     //EmoAttractos
     EmoAttractor            mFrustrationAtt;
-    EmoAttractor            mEngagementAtt;    
+    EmoAttractor            mEngagementAtt;   
+    
+    //Anim
+    Anim<float>             mGravityAnim;
     
 };
 

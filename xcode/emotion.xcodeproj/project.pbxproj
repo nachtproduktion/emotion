@@ -36,6 +36,7 @@
 		236347FF1533CAC10096498A /* OscSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236347A61533CAC00096498A /* OscSender.cpp */; };
 		2363482E15343B8E0096498A /* AttractorPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2363482D15343B8E0096498A /* AttractorPoint.cpp */; };
 		23634831153442CA0096498A /* AttractorController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23634830153442CA0096498A /* AttractorController.cpp */; };
+		2363484B153560990096498A /* EmotivController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2363484A153560980096498A /* EmotivController.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
 		53E3CDFC0E86099300238D2B /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53E3CDFB0E86099300238D2B /* Carbon.framework */; };
@@ -134,6 +135,8 @@
 		2363482D15343B8E0096498A /* AttractorPoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttractorPoint.cpp; path = ../src/AttractorPoint.cpp; sourceTree = "<group>"; };
 		2363482F153442BC0096498A /* AttractorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AttractorController.h; path = ../include/AttractorController.h; sourceTree = "<group>"; };
 		23634830153442CA0096498A /* AttractorController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttractorController.cpp; path = ../src/AttractorController.cpp; sourceTree = "<group>"; };
+		2363484A153560980096498A /* EmotivController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmotivController.cpp; path = ../src/EmotivController.cpp; sourceTree = "<group>"; };
+		2363484D153560A60096498A /* EmotivController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmotivController.h; path = ../include/EmotivController.h; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* emotion_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = emotion_Prefix.pch; sourceTree = "<group>"; };
@@ -170,6 +173,7 @@
 			children = (
 				236346BB1533C8D60096498A /* _codeSnippet.cpp */,
 				236346BC1533C8D60096498A /* AudioController.cpp */,
+				2363484A153560980096498A /* EmotivController.cpp */,
 				236346C41533C8D60096498A /* InfoPanel.cpp */,
 				00BAE6590E7ED9C10018A608 /* emotionApp.cpp */,
 				236346BD1533C8D60096498A /* Character.cpp */,
@@ -401,6 +405,7 @@
 				236346B51533C8C70096498A /* niko_functionen.h */,
 				236346B41533C8C70096498A /* InfoPanel.h */,
 				236346AB1533C8C70096498A /* AudioController.h */,
+				2363484D153560A60096498A /* EmotivController.h */,
 				236346AC1533C8C70096498A /* Character.h */,
 				236346B01533C8C70096498A /* CharacterPoint.h */,
 				236346AD1533C8C70096498A /* CharacterBackbone.h */,
@@ -515,6 +520,7 @@
 				236347FF1533CAC10096498A /* OscSender.cpp in Sources */,
 				2363482E15343B8E0096498A /* AttractorPoint.cpp in Sources */,
 				23634831153442CA0096498A /* AttractorController.cpp in Sources */,
+				2363484B153560990096498A /* EmotivController.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

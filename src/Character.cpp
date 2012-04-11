@@ -208,6 +208,7 @@ void Character::createCharacter() {
                 mCharacterPoints.push_back( CharacterPoint( position, &mPhysics, mCharacterPoints.size() ) );
                 mCharacterPoints.back().mLevel = CPL_ROOT;
                 mCharacterPoints.back().mFunction = CPF_SPACER;
+                mCharacterPoints.back().setSuperParent( pRootPoint );
                 
                 pSpacerPoint = &mCharacterPoints.back();
                 
@@ -225,6 +226,8 @@ void Character::createCharacter() {
             
             
             mCharacterPoints.push_back( CharacterPoint( position, &mPhysics, mCharacterPoints.size() ) );
+            mCharacterPoints.back().setSuperParent( pRootPoint );
+            
             if( CharacterVector[a][b] == 0 ) {
                 mCharacterPoints.back().mLevel = CPL_FEELER;
                 mCharacterPoints.back().mFunction = CPF_NORMAL;
@@ -251,6 +254,7 @@ void Character::createCharacter() {
                 
                 mCharacterPoints.push_back( CharacterPoint( position, &mPhysics, mCharacterPoints.size() ) );
                 mCharacterPoints.back().mLevel = CPL_FEELER;
+                mCharacterPoints.back().setSuperParent( pRootPoint );
                 
                 CharacterPoint *pFeelerPoint = &mCharacterPoints.back();
 
@@ -455,6 +459,14 @@ void Character::createSplinesA() {
             }
             
             points.push_back( lastPoint ); 
+            
+            if( lastPoint->mFunction == CPF_SPACER ) {
+                lastPoint = lastPoint->getParent();
+                points.push_back( lastPoint );
+            }
+                
+            
+
             mPaths.push_back( points );
             
         }
@@ -615,77 +627,6 @@ void Character::inputHigh( PeakTimer _pt ) {
 // SET FUNCTIONS /////////////////////////////
 //////////////////////////////////////////////
 
-
-//void Character::setRadius( float _r ) {
-//    
-//    if( _r != mRadius ) {
-//    
-//        float scaleFactor = _r/mRadius;
-//        scale(scaleFactor);
-//    
-//        mRadius = _r;
-//        //mPhysics.setWorldSphere(CENTER, mRadius);
-//        
-//     }
-//}
-//
-//void Character::scale( float _s ) {
-//     
-//    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
-//        
-//        Vec3f pointVec = p->getPosition();
-//        pointVec *= _s;
-//        p->moveTo(pointVec);
-//
-//	}
-//    
-//    for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){
-//        p->setBondLength( p->getBondLength() * _s );
-//        p->mSaveDistanceA *= _s;    
-//    } 
-//    
-//    mFrustrationAtt.changeWorld( CENTER_POS, mRadius );
-//    mEngagementAtt.changeWorld( CENTER_POS, mRadius );
-//    
-//}
-
-
-
-
-
-void Character::dance() {
-    
-    /*
-    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
-        if( !p->getActive() ) {
-            if( p->getEndOfLine() ) {
-                
-                Vec3f neighboursPos = p->mNeighbours[0]->getPosition();
-                Vec3f particlePos = p->getPosition();
-                float dist = particlePos.distance(neighboursPos);
-                
-                Vec3f randVec = (neighboursPos + Rand::randVec3f()) * dist;
-                
-                //p->moveTo(randVec, mNextBeat, false);
-                
-            }
-        }
-    }
-     */
-}
-
-void Character::wince( int _amount ) {
-    mMovement.wince( _amount );
-}
-
-void Character::jump( int _amount ) {
-    mMovement.jump( niko::getTimeMS() + 2000, _amount );
-}
-
-void Character::center() {
-    mMovement.moveToCenter();
-}
-
 void Character::sphere() {
     mMovement.moveOnSphere();
 }
@@ -707,56 +648,16 @@ void Character::addRandomForce(float _f) {
     }
 }
 
-void Character::gravity() {
+void Character::moveToCenter() {
     
-    
-     static int count = 0;
-     
-     
-     if(count == 0) {
-         for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
-             p->turnOff();
-         }   
-         
-         for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){ 
-             p->turnOff();
-         }   
-        
-         mBackbone.getBond()->turnOff();
-         
-         count = 1;
-         mPhysics.setGravity(Vec3f(0, 3, 0));
-     }
-     else {
-         for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
-             p->turnOn();
-         }   
-         
-         for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){ 
-             p->turnOn();
-         }   
-         
-         mBackbone.getBond()->turnOn();
-         
-         count = 0;
-         mPhysics.setGravity(Vec3f(0, 0, 0));
-     }
-}
-
-//RENAME
-void Character::test() {
-    
+    mMovement.moveToCenter();
     
     for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){ 
-        
         if( p->mLevel == CPL_FEELER && p->mFunction == CPF_STAND ) {
             
             p->setFixed();
-            
             ci::Vec3f pos = p->getPosition();
-            
             pos.y = 200.0f;
-            
             p->moveTo(pos);
             
             int id = p->getStandBondID();
@@ -764,12 +665,71 @@ void Character::test() {
             
         }
     }
+}
+
+void Character::jump( PeakTimer _pt ) {
+    mMovement.jump( _pt.mTime, 50 );
+}
+
+
+void Character::gravity( PeakTimer _pt ) {
+    
+    //alles Free
+    for(  std::vector<CharacterPoint>::iterator p = mCharacterPoints.begin(); p != mCharacterPoints.end(); ++p ){         
+        p->setFree();
+    }
+    
+    //Time Calc
+    float dur = _pt.mTime - niko::getTimeMS();
+    
+    mGravityAnim = 0;
+    
+    timeline().apply( &mGravityAnim, 1.0f, dur/1000, EaseInOutQuad() );
+    timeline().appendTo( &mGravityAnim, 0.0f, 0.1f, EaseNone() );
+
+    
+//         for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+//             p->turnOff();
+//         }   
+//         
+//         for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){ 
+//             p->turnOff();
+//         }   
+//        
+//         mBackbone.getBond()->turnOff();
+         
+
+//         for(  std::vector<Bond>::iterator p = mBonds.begin(); p != mBonds.end(); ++p ){ 
+//             p->turnOn();
+//         }   
+//         
+//         for(  std::vector<Bond>::iterator p = mStandBonds.begin(); p != mStandBonds.end(); ++p ){ 
+//             p->turnOn();
+//         }   
+//         
+//         mBackbone.getBond()->turnOn();
+
+}
+
+//RENAME
+void Character::test() {
+
 
 }
 
 //////////////////////////////////////////////
 // UPDATE FUNCTIONS //////////////////////////
 //////////////////////////////////////////////
+
+void Character::particleDrop() {
+
+    for( int i = 0; i < mPaths.size(); i++) {
+        mCharacterSplines[i].particleFallDown();
+    }
+
+    mBackbone.getSpline()->particleFallDown();
+    
+}
 
 void Character::updateSplines() {
     
@@ -782,6 +742,7 @@ void Character::updateSplines() {
         
         mCharacterSplines[i].update( newPoints );
     }
+
     
 }
 
@@ -816,7 +777,25 @@ void Character::updateEmotions( float _frustration, float _engagement,float _med
 void Character::update() {
         
     if(!mAlive) { return; };
-
+    
+    static int uCount = 0;
+    static int randDrop = 150;
+    uCount++;
+    
+    if( (uCount % randDrop) == 0 ) {
+        particleDrop();
+        randDrop = Rand::randInt(50, 150);
+    }
+    
+    //update Gravity
+    static float lastg = 0;
+    
+    if(lastg != mGravityAnim) {
+        mPhysics.setGravity(Vec3f(0, mGravityAnim, 0));
+        lastg = mGravityAnim;
+    }
+    
+    
     mMovement.update();
     mBackbone.update();
     
@@ -901,9 +880,9 @@ void Character::draw() {
                 
             }
     
-    
-    
-    
+            gl::color(1,1,1);
+            mMovement.rendershit();
+        
             //Draw EmoAttractors
             //mFrustrationAtt.render();
             //mEngagementAtt.render();

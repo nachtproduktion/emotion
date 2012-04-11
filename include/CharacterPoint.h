@@ -28,9 +28,13 @@ class CharacterPoint {
         void setParticle();
         Physics::Particle3D* getParticle();
     
-        void setParent( CharacterPoint* _neighbour );
-        void addChild( CharacterPoint* _neighbour );
+        void setParent( CharacterPoint* _parent );
+        void addChild( CharacterPoint* _child );
         void clearChilds();
+    
+    
+        CharacterPoint* getSuperParent();
+        void setSuperParent( CharacterPoint* _superparent );
     
         CharacterPoint* getParent();
         CharacterPoint* getChild( int _index );
@@ -89,8 +93,10 @@ class CharacterPoint {
     
         Anim<Vec3f>		mAnimPos;
     
-    private:
+        
     
+    private:
+        CharacterPoint *        mSuperParent;
         CharacterPoint *        mParent;
         std::vector<  CharacterPoint* > mChilds;
     

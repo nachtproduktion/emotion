@@ -31,6 +31,7 @@ Particle::Particle( ci::Vec3f _pos, ci::Vec3f _vel)
     
     mSphere = false;
     mCircle = false;
+    mFallDown = false;
 }
 
 Particle::Particle( float _radius, ci::Vec3f _pos, float _theta, float _u ) {
@@ -53,6 +54,7 @@ Particle::Particle( float _radius, ci::Vec3f _pos, float _theta, float _u ) {
     mColor              = ColorA(1.0f,1.0f,1.0f,1.0f);
     
     mIsDead             = false;
+    mFallDown           = false;
     
 }
 
@@ -77,14 +79,25 @@ Particle::Particle( ci::Matrix44f* _matrix, float _radius, bool _statical ) {
     
 	mIsDead			= false;
 	mAge			= 0.0f;
-	mLifeSpan		= Rand::randFloat( 80.0f, 100.0f );
-	
+	mLifeSpan		= Rand::randFloat( 30.0f, 50.0f );
+    
     mColor          = ColorA(1.0f,1.0f,1.0f,1.0f);
+    mFallDown       = false;
     
 }
 
 void Particle::setVelocity( ci::Vec3f _mpoint ) {
-    mVelocity = _mpoint - mPosition;
+    
+    if( _mpoint.lengthSquared() > 30 ) {
+        mColor          = ColorA(0.5f,0.5f,1.0f,1.0f);
+        
+    } else {
+        mFallDown = true;
+        mColor    = ColorA(1.0f,0.5f,1.0f,1.0f);
+    }
+    
+    mVelocity = _mpoint;
+    mVelocity *= 0.1;
     //mVelocity.normalize();
 }
 
@@ -109,30 +122,46 @@ void Particle::findPerlin()
 
 void Particle::findVelocity()
 {
-	mVelocity = mPerlin;
-    mPosition += mVelocity * 2;
+	mVelocity += mPerlin;
+    mPosition += mVelocity;
+        
 }
 
+void Particle::falldown() {
+    
+    if( mFallDown ) {
+        mVelocity.y += Rand::randInt(2,5);
+        mFallDown   = false;
+        mAge        = 0;
+    }
+    
+}
 	
 void Particle::update()
 {
     if(mStatical) {
         calcPosition();
     } else {
-        findPerlin();
-        findVelocity();
+        
+        if( mPosition.y < 200 ) {
+            findPerlin();
+            findVelocity();
+        } else {
+            
+            mVelocity.y *= 0.5;
+            mPosition.y -= mVelocity.y;
+            
+        }
         
         //AGING
-        mAge ++;
+        mAge++;
+        
         mColor.a = niko::mapping(mAge, 0, mLifeSpan, 1.0, 0.0, true);
         
         if( mAge > mLifeSpan ){
             mIsDead = true;
         }
     }
-    
-
-    
 
     
     /*

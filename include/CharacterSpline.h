@@ -27,10 +27,11 @@ class CharacterSpline {
         void updateVectors();
         void buildPTF();
         
-        void setRoot( bool _r = false );
+        void setRoot( bool _r = true );
         bool getRoot();
     
         void update( std::vector<ci::Vec3f> _pointList );
+        void particleFallDown();
         void updateParticle();
     
         void updateVBO();
